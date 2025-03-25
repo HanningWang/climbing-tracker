@@ -1,0 +1,129 @@
+<view class="routes-container">
+  <view class="header">
+    <text class="title">刷线记录</text>
+    <text class="subtitle">记录您的攀岩路线和成绩</text>
+  </view>
+
+  <view class="tab-container">
+    <view class="tab {{activeTab === 'normal' ? 'active' : ''}}" bindtap="switchTab" data-tab="normal">普通刷线</view>
+    <view class="tab {{activeTab === 'game' ? 'active' : ''}}" bindtap="switchTab" data-tab="game">刷线游戏</view>
+  </view>
+
+  <view class="form-container" wx:if="{{activeTab === 'normal'}}">
+    <view class="form-title">记录刷线</view>
+    
+    <view class="form-item">
+      <text class="label">攀岩类型</text>
+      <picker bindchange="bindTypeChange" value="{{typeIndex}}" range="{{typeArray}}" class="picker">
+        <view class="picker-content">
+          {{typeArray[typeIndex]}}
+          <view class="arrow">▼</view>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">难度</text>
+      <picker bindchange="bindDifficultyChange" value="{{difficultyIndex}}" range="{{difficultyArray}}" class="picker">
+        <view class="picker-content">
+          {{difficultyArray[difficultyIndex]}}
+          <view class="arrow">▼</view>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">数量</text>
+      <input class="input" type="number" placeholder="输入数量" model:value="{{quantity}}" />
+    </view>
+
+    <button class="add-btn" bindtap="addToList">添加到列表</button>
+
+    <!-- 列表显示 -->
+    <view class="route-list" wx:if="{{routesList.length > 0}}">
+      <view class="list-header">
+        <view class="list-col">类型</view>
+        <view class="list-col">难度</view>
+        <view class="list-col">数量</view>
+        <view class="list-col">操作</view>
+      </view>
+      <view class="list-item" wx:for="{{routesList}}" wx:key="index">
+        <view class="list-col">{{item.type}}</view>
+        <view class="list-col">{{item.difficulty}}</view>
+        <view class="list-col">{{item.quantity}}</view>
+        <view class="list-col">
+          <view class="delete-icon" bindtap="deleteListItem" data-index="{{index}}">
+            <view class="svg-icon">
+              <image src="../../assets/delete.svg"/>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <text class="label">地点</text>
+      <input class="input" placeholder="攀岩馆或岩场名称" model:value="{{location}}" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">日期</text>
+      <picker mode="date" value="{{date}}" bindchange="bindDateChange" class="picker">
+        <view class="picker-content">
+          {{date || 'yyyy/mm/dd'}}
+          <text class="calendar-icon">📅</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">总训练时间（分钟）</text>
+      <input class="input" type="number" placeholder="输入训练时间" model:value="{{trainingTime}}" />
+    </view>
+
+    <view class="button-group">
+      <button class="save-btn" bindtap="saveRecord">保存记录</button>
+      <button class="clear-btn" bindtap="clearForm">清空表单</button>
+    </view>
+  </view>
+
+  <view class="game-container" wx:if="{{activeTab === 'game'}}">
+    <text class="coming-soon">刷线游戏功能即将上线，敬请期待！</text>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="history-container" wx:if="{{historyRecords.length > 0}}">
+    <view class="history-header">
+      <text>刷线记录</text>
+      <picker mode="date" value="{{filterDate}}" bindchange="bindFilterDateChange" class="date-filter">
+        <view class="filter-content">
+          <text>筛选: {{filterDate || '全部日期'}}</text>
+          <text class="filter-icon">🔍</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="record-card" wx:for="{{filteredRecords}}" wx:key="id">
+      
+      <view class="card-content">
+        <view class="card-location-title">{{item.location}}</view>
+        <view class="card-item">
+          <text class="card-label">时间:</text>
+          <text class="card-value">{{item.date}}</text>
+        </view>
+        <view class="card-item">
+          <text class="card-label">总训练时间:</text>
+          <text class="card-value">{{item.trainingTime}}分钟</text>
+        </view>
+        <view class="card-item">
+          <text class="card-label">记录数:</text>
+          <text class="card-value">{{item.routes.length}}条</text>
+        </view>
+      </view>
+      <view class="card-actions">
+        <button class="view-btn" bindtap="viewRecordDetail" data-id="{{item.id}}">查看详情</button>
+        <button class="delete-btn" bindtap="deleteRecord" data-id="{{item.id}}">删除</button>
+      </view>
+    </view>
+  </view>
+</view> 

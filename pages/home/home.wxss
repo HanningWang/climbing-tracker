@@ -1,0 +1,482 @@
+/* pages/home/home.wxss */
+.stats-container {
+  width: 90%;
+  margin: 0 auto;
+  padding: 30rpx;
+  background-color: #fff;
+  border-radius: 15rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.stats-header {
+  margin-bottom: 20rpx;
+}
+
+.stats-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.stats-subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.time-filter {
+  display: flex;
+  margin-bottom: 30rpx;
+  border-bottom: 1rpx solid #e0e0e0;
+}
+
+.filter-btn {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+}
+
+.filter-btn.active {
+  color: #22C55E;
+  font-weight: 500;
+}
+
+.filter-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  height: 4rpx;
+  background-color: #22C55E;
+  border-radius: 2rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+  padding-top: 10rpx;
+}
+
+.stats-item {
+  background-color: #fff;
+  border-radius: 10rpx;
+  padding: 50rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.20);
+}
+
+.stats-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.stats-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.climbing-progress {
+  background-color: #fff;
+  border-radius: 10rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  margin-top: 20rpx;
+}
+
+.progress-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.chart-container {
+  display: flex;
+  height: 300rpx;
+  margin: 20rpx 0;
+  position: relative;
+}
+
+.y-axis-left, .y-axis-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 60rpx;
+  font-size: 20rpx;
+  color: #666;
+}
+
+.y-axis-left {
+  align-items: flex-end;
+  padding-right: 10rpx;
+  color: #8a7cff; /* 紫色 */
+}
+
+.y-axis-right {
+  align-items: flex-start;
+  padding-left: 10rpx;
+  color: #4cbb5a; /* 深一点的绿色 */
+}
+
+.chart-area {
+  flex: 1;
+  position: relative;
+  border-left: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #eee;
+}
+
+.chart-line {
+  position: absolute;
+  height: 2px;
+}
+
+.climb-count-line {
+  background-color: #8a7cff; /* 紫色 */
+}
+
+.climb-time-line {
+  background-color: #7cff8a; /* 绿色 */
+}
+
+.data-point {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.climb-count-point {
+  background-color: #8a7cff; /* 紫色 */
+}
+
+.climb-time-point {
+  background-color: #7cff8a; /* 绿色 */
+}
+
+.x-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 20rpx;
+  color: #666;
+  margin-top: 10rpx;
+  overflow-x: auto;
+}
+
+.x-axis-placeholder {
+  width: 10rpx;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 0 20rpx;
+}
+
+.legend-color {
+  width: 30rpx;
+  height: 4rpx;
+  margin-right: 10rpx;
+}
+
+.climb-count-color {
+  background-color: #8a7cff; /* 紫色 */
+}
+
+.climb-time-color {
+  background-color: #4cbb5a; /* 深一点的绿色，更容易看清 */
+}
+
+/* 添加垂直网格线样式 */
+.grid-line.vertical {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  height: 100%;
+  background-color: #eee;
+}
+
+/* 添加线段样式 */
+.line-segment {
+  position: absolute;
+  height: 2px;
+  z-index: 2;
+}
+
+/* 添加简单线段样式 */
+.simple-line {
+  position: absolute;
+  background-color: #000;
+}
+
+.count-line {
+  background-color: #8a7cff; /* 紫色 */
+  z-index: 2;
+}
+
+.time-line {
+  background-color: #4cbb5a; /* 深一点的绿色，更容易看清 */
+  z-index: 2;
+}
+
+.data-point {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  transform: translate(-50%, 50%);
+  z-index: 3;
+}
+
+/* 添加折线图样式 */
+.polyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.count-polyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  border: none;
+}
+
+.time-polyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  border: none;
+}
+
+.polyline-point {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+}
+
+.count-line-segment {
+  background-color: #8a7cff; /* 紫色 */
+}
+
+.time-line-segment {
+  background-color: #4cbb5a; /* 深一点的绿色，更容易看清 */
+}
+
+.x-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 20rpx;
+  color: #666;
+  margin-top: 10rpx;
+}
+
+/* 修改图例文本颜色 */
+.legend-item:first-child text {
+  color: #8a7cff; /* 紫色 - 攀爬数量 */
+}
+
+.legend-item:last-child text {
+  color: #4cbb5a; /* 深一点的绿色 - 攀爬时间 */
+}
+
+/* 修改攀爬时间的颜色 */
+.climb-time-color,
+.climb-time-point,
+.time-line-segment,
+.time-line {
+  background-color: #4cbb5a; /* 深一点的绿色，更容易看清 */
+}
+
+/* 修改右侧Y轴标签颜色 */
+.y-axis-right {
+  color: #4cbb5a; /* 深一点的绿色 */
+}
+
+/* 添加成就卡片按钮样式 */
+.achievement-button-container {
+  display: flex;
+  justify-content: center;
+  margin: 30rpx 0;
+}
+
+.achievement-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12rpx;
+  background-color: #07c160;
+  color: white;
+  min-width: 95%;
+  font-size: 28rpx;
+  padding: 15rpx 40rpx;
+  border: none;
+}
+
+.achievement-button image {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 成就卡片弹窗样式 */
+.achievement-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.achievement-card {
+  width: 80%;
+  background-color: white;
+  border-radius: 15rpx;
+  padding: 30rpx;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 10rpx;
+  right: 20rpx;
+  font-size: 40rpx;
+  color: #999;
+  cursor: pointer;
+}
+
+.card-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.card-content {
+  width: 86%;
+  background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%); /* 从蓝色到紫色的渐变 */
+  border-radius: 10rpx;
+  padding: 30rpx;
+  color: white;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.card-header-title {
+  font-size: 42rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.card-date {
+  font-size: 24rpx;
+}
+
+.card-stats-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.card-stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.card-stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 45%;
+}
+
+.card-stats-item.full-width {
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+.card-stats-label {
+  font-size: 28rpx;
+  margin-bottom: 10rpx;
+}
+
+.card-stats-value {
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.save-card-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12rpx;
+  margin-top: 30rpx;
+  background-color: #07c160;
+  color: white;
+  min-width: 90%;
+  font-size: 28rpx;
+  padding: 15rpx 40rpx;
+  border: none;
+}
+
+.save-card-button image {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 添加隐藏的 canvas 样式 */
+.hidden-canvas {
+  width: 300px;
+  height: 400px;
+  position: absolute;
+  left: -9999px;
+  visibility: hidden;
+}

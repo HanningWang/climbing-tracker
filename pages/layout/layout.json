@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "home": "/pages/home/home",
+    "breakthrough": "/pages/breakthrough/breakthrough",
+    "routes": "/pages/routes/routes",
+    "training": "/pages/training/training"
+  }
+}

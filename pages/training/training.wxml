@@ -1,0 +1,236 @@
+<view class="training-container">
+  <view class="header">
+    <text class="title">训练计划</text>
+    <text class="subtitle">制定和跟踪您的训练计划</text>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{activeTab === 'plan' ? 'active' : ''}}" bindtap="switchTab" data-tab="plan">
+      <text>训练计划</text>
+    </view>
+    <view class="tab {{activeTab === 'execute' ? 'active' : ''}}" bindtap="switchTab" data-tab="execute">
+      <text>执行训练</text>
+    </view>
+  </view>
+
+  <!-- 训练计划 Tab -->
+  <view class="tab-content" wx:if="{{activeTab === 'plan'}}">
+    <view class="form-container">
+      <view class="form-title">创建训练计划</view>
+      
+      <view class="form-item">
+        <text class="label">计划名称</text>
+        <input class="input" placeholder="例如：力量训练、耐力训练" model:value="{{planName}}" />
+      </view>
+
+      <view class="form-item">
+        <text class="label">计划时长（分钟）</text>
+        <input class="input" type="number" placeholder="输入训练时长" model:value="{{planDuration}}" />
+      </view>
+
+      <view class="form-item">
+        <text class="label">训练项目</text>
+        <view class="exercise-input-container">
+          <input class="input exercise-input" placeholder="添加训练项目" model:value="{{exerciseInput}}" />
+          <view class="add-btn" bindtap="addExercise">
+            <text>+</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 已添加的训练项目列表 -->
+      <view class="exercises-list" wx:if="{{exercises.length > 0}}">
+        <view class="exercise-item" wx:for="{{exercises}}" wx:key="index">
+          <text>{{item}}</text>
+          <view class="exercise-actions">
+            <!-- 编辑图标 -->
+            <view class="edit-exercise" bindtap="editExercise" data-index="{{index}}">
+              <text class="edit-text">✎</text>
+            </view>
+            <!-- 删除图标 -->
+            <view class="delete-exercise" bindtap="deleteExercise" data-index="{{index}}">
+              <text>×</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <button class="submit-btn" bindtap="createPlan">创建计划</button>
+    </view>
+
+    <!-- 已保存的训练计划列表 -->
+    <view class="plans-list" wx:if="{{trainingPlans.length > 0}}">
+      <view class="list-header">
+        <text>已保存的训练计划</text>
+      </view>
+      
+      <view class="plan-card" wx:for="{{trainingPlans}}" wx:key="id">
+        <view class="card-header">
+          <view class="card-title">{{item.name}}</view>
+        </view>
+        
+        <view class="card-content">
+          <view class="card-row">
+            <text class="card-label">时长：</text>
+            <text class="card-value">{{item.duration}} 分钟</text>
+          </view>
+          <view class="card-row">
+            <text class="card-label">项目数：</text>
+            <text class="card-value">{{item.exercises.length}} 个</text>
+          </view>
+        </view>
+        
+        <view class="card-actions">
+          <view class="action-btn view-btn" bindtap="viewPlanDetail" data-id="{{item.id}}">
+            查看详情
+          </view>
+          <view class="action-btn delete-btn" bindtap="deletePlan" data-id="{{item.id}}">
+            删除
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 执行训练 Tab -->
+  <view class="tab-content" wx:if="{{activeTab === 'execute'}}">
+    <view class="execute-container">
+      <view class="form-container">
+        <view class="form-title">开始新训练</view>
+        
+        <view class="form-item">
+          <text class="label">选择训练计划</text>
+          <picker bindchange="selectTrainingPlan" value="{{selectedPlanIndex}}" range="{{trainingPlanNames}}" class="picker">
+            <view class="picker-content">
+              {{selectedPlanIndex >= 0 ? trainingPlanNames[selectedPlanIndex] : '请选择训练计划'}}
+              <view class="arrow">▼</view>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 计时器 -->
+        <view class="timer-container" wx:if="{{selectedPlanIndex >= 0}}">
+          <view class="timer">{{timerDisplay}}</view>
+          <view class="timer-actions">
+            <button class="timer-btn {{isTimerRunning ? 'pause-btn' : 'start-btn'}}" bindtap="toggleTimer">
+              {{isTimerRunning ? '暂停' : '开始'}}
+            </button>
+            <button class="timer-btn reset-btn" bindtap="resetTimer">重置</button>
+          </view>
+        </view>
+
+        <!-- 训练内容 -->
+        <view class="training-content" wx:if="{{selectedPlanIndex >= 0}}">
+          <text class="content-title">训练内容</text>
+          <view class="exercise-checklist">
+            <view class="exercise-check-item" wx:for="{{selectedPlan.exercises}}" wx:key="index">
+              <checkbox checked="{{completedExercises[index]}}" bindtap="toggleExerciseComplete" data-index="{{index}}"></checkbox>
+              <text class="exercise-name {{completedExercises[index] ? 'completed' : ''}}">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 训练反馈 -->
+        <view class="form-item" wx:if="{{selectedPlanIndex >= 0}}">
+          <text class="label">训练反馈</text>
+          <textarea class="textarea" placeholder="记录你的训练感受..." model:value="{{trainingFeedback}}"></textarea>
+        </view>
+
+        <button class="submit-btn" bindtap="saveTrainingRecord" wx:if="{{selectedPlanIndex >= 0}}">保存训练记录</button>
+      </view>
+
+      <!-- 训练记录列表 -->
+      <view class="training-records" wx:if="{{trainingRecords.length > 0}}">
+        <view class="list-header">
+          <text>训练记录</text>
+          
+          <!-- 日期选择器 -->
+          <view class="date-picker">
+            <picker mode="date" value="{{filterDate}}" bindchange="changeFilterDate">
+              <view class="date-picker-content">
+                {{filterDate || 'yyyy/mm/dd'}}
+                <text class="calendar-icon">📅</text>
+              </view>
+            </picker>
+            <view class="search-btn" bindtap="searchRecords">
+              <text class="search-icon">🔍</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="record-card" wx:for="{{filteredRecords}}" wx:key="id">
+          <view class="card-header">
+            <view class="card-title">{{item.planName}}</view>
+            <view class="card-date">{{item.date}}</view>
+          </view>
+          
+          <view class="card-content">
+            <view class="card-row">
+              <text class="card-label">时长：</text>
+              <text class="card-value">{{item.duration}} 分钟</text>
+            </view>
+            <view class="card-row">
+              <text class="card-label">完成项目：</text>
+              <text class="card-value">{{item.completedCount}}/{{item.totalCount}}</text>
+            </view>
+            <view class="card-feedback" wx:if="{{item.feedback}}">
+              <text class="card-label">反馈：</text>
+              <text class="card-value">{{item.feedback}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 计划详情弹窗 -->
+  <view class="modal" wx:if="{{showPlanDetail}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{currentPlan.name}}</text>
+        <view class="close-btn" bindtap="closePlanDetail">×</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="detail-item">
+          <text class="detail-label">训练时长：</text>
+          <text class="detail-value">{{currentPlan.duration}} 分钟</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">训练项目：</text>
+          <view class="detail-exercises">
+            <view class="detail-exercise" wx:for="{{currentPlan.exercises}}" wx:key="index">
+              <text>{{index + 1}}. {{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="modal-btn" bindtap="closePlanDetail">关闭</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加编辑训练项目的弹窗 -->
+  <view class="modal" wx:if="{{showEditExercise}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">编辑训练项目</text>
+        <view class="close-btn" bindtap="closeEditExercise">×</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="form-item">
+          <input class="input" model:value="{{editExerciseContent}}" focus="{{true}}" />
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="modal-btn cancel-btn" bindtap="closeEditExercise">取消</button>
+        <button class="modal-btn" bindtap="saveEditExercise">保存</button>
+      </view>
+    </view>
+  </view>
+</view> 

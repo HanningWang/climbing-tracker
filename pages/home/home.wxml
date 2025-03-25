@@ -1,0 +1,167 @@
+<!--pages/home/home.wxml-->
+<view class="stats-container">
+  <view class="stats-header">
+    <text class="stats-title">统计数据</text>
+    <text class="stats-subtitle">查看你的攀岩过往记录数据</text>
+  </view>
+
+  <view class="time-filter">
+    <view class="filter-btn {{timeFilter === 'week' ? 'active' : ''}}" bindtap="changeTimeFilter" data-filter="week">过去7天</view>
+    <view class="filter-btn {{timeFilter === 'all' ? 'active' : ''}}" bindtap="changeTimeFilter" data-filter="all">全部时间</view>
+  </view>
+
+  <view class="stats-grid">
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.trainingDays}}</text>
+      <text class="stats-label">训练天数</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.breakthroughCount}}</text>
+      <text class="stats-label">突破次数</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.boulderingCount}}</text>
+      <text class="stats-label">抱石攀爬数量</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.leadClimbingCount}}</text>
+      <text class="stats-label">先锋攀爬次数</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.climbingTime.hours}}小时{{statsData.climbingTime.minutes}}分钟</text>
+      <text class="stats-label">攀岩刷线时间</text>
+    </view>
+    <view class="stats-item">
+      <text class="stats-value">{{statsData.trainingTime.hours}}小时{{statsData.trainingTime.minutes}}分钟</text>
+      <text class="stats-label">训练时间</text>
+    </view>
+  </view>
+
+  <view class="climbing-progress">
+    <text class="progress-title">攀爬进度</text>
+    
+    <view class="chart-container">
+      <!-- Y轴标签 - 左侧（攀爬数量） -->
+      <view class="y-axis-left">
+        <text>{{climbingProgress.maxClimbCount}}</text>
+        <text>{{climbingProgress.maxClimbCount * 0.75}}</text>
+        <text>{{climbingProgress.maxClimbCount * 0.5}}</text>
+        <text>{{climbingProgress.maxClimbCount * 0.25}}</text>
+        <text>0</text>
+      </view>
+      
+      <!-- 图表区域 -->
+      <view class="chart-area">
+        <!-- 水平网格线 -->
+        <view class="grid-line" style="top: 0%"></view>
+        <view class="grid-line" style="top: 25%"></view>
+        <view class="grid-line" style="top: 50%"></view>
+        <view class="grid-line" style="top: 75%"></view>
+        <view class="grid-line" style="top: 100%"></view>
+        
+        <!-- 垂直网格线 -->
+        <block wx:for="{{climbingProgress.records}}" wx:key="date" wx:for-index="index">
+          <view class="grid-line vertical" style="left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
+        </block>
+        
+        <!-- 只保留数据点 -->
+        <block wx:for="{{climbingProgress.records}}" wx:key="date" wx:for-index="index">
+          <view class="data-point climb-count-point" style="bottom: {{item.climbingCount / climbingProgress.maxClimbCount * 100}}%; left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
+          <view class="data-point climb-time-point" style="bottom: {{item.climbingMinutes / climbingProgress.maxClimbTime * 100}}%; left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
+        </block>
+      </view>
+      
+      <!-- Y轴标签 - 右侧（攀爬时间） -->
+      <view class="y-axis-right">
+        <text>{{climbingProgress.maxClimbTime}}</text>
+        <text>{{climbingProgress.maxClimbTime * 0.75}}</text>
+        <text>{{climbingProgress.maxClimbTime * 0.5}}</text>
+        <text>{{climbingProgress.maxClimbTime * 0.25}}</text>
+        <text>0</text>
+      </view>
+    </view>
+    
+    <!-- X轴标签 -->
+    <view class="x-axis">
+      <text>{{climbingProgress.startDate}}</text>
+      <text>{{climbingProgress.endDate}}</text>
+    </view>
+    
+    <!-- 图例 -->
+    <view class="chart-legend">
+      <view class="legend-item">
+        <view class="legend-color climb-count-color"></view>
+        <text>攀爬数量</text>
+      </view>
+      <view class="legend-item">
+        <view class="legend-color climb-time-color"></view>
+        <text>攀爬时间</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加生成成就卡片按钮 -->
+  <view class="achievement-button-container">
+    <button class="achievement-button" bindtap="showAchievementCard">
+      <image src="../../assets/upload.svg" mode="aspectFit"></image>
+      <text>生成成就卡片</text>
+    </button>
+  </view>
+
+  <!-- 成就卡片弹窗 -->
+  <view class="achievement-modal" wx:if="{{showAchievementCard}}">
+    <view class="achievement-card">
+      <view class="close-button" bindtap="hideAchievementCard">×</view>
+      <view class="card-title">你的攀岩成就</view>
+      
+      <view class="card-content">
+        <view class="card-header">
+          <text class="card-header-title">你的攀岩成就</text>
+          <text class="card-date">{{achievementDate}}</text>
+        </view>
+        
+        <view class="card-stats-grid">
+          <view class="card-stats-row">
+            <view class="card-stats-item">
+              <text class="card-stats-label">训练天数</text>
+              <text class="card-stats-value">{{statsData.trainingDays}}</text>
+            </view>
+            <view class="card-stats-item">
+              <text class="card-stats-label">突破次数</text>
+              <text class="card-stats-value">{{statsData.breakthroughCount}}</text>
+            </view>
+          </view>
+          
+          <view class="card-stats-row">
+            <view class="card-stats-item">
+              <text class="card-stats-label">抱石攀爬数量</text>
+              <text class="card-stats-value">{{statsData.boulderingCount}}</text>
+            </view>
+            <view class="card-stats-item">
+              <text class="card-stats-label">先锋攀爬次数</text>
+              <text class="card-stats-value">{{statsData.leadClimbingCount}}</text>
+            </view>
+          </view>
+          
+          <view class="card-stats-item full-width">
+            <text class="card-stats-label">攀岩刷线时间</text>
+            <text class="card-stats-value">{{statsData.climbingTime.hours}}小时{{statsData.climbingTime.minutes}}分钟</text>
+          </view>
+          
+          <view class="card-stats-item full-width">
+            <text class="card-stats-label">训练时间</text>
+            <text class="card-stats-value">{{statsData.trainingTime.hours}}小时{{statsData.trainingTime.minutes}}分钟</text>
+          </view>
+        </view>
+      </view>
+      
+      <button class="save-card-button" bindtap="saveAchievementCard">
+        <image src="../../assets/download.svg" mode="aspectFit"></image>
+        <text>保存成就卡片</text>
+      </button>
+      
+      <!-- 添加隐藏的 canvas 用于绘制图片 -->
+      <canvas type="2d" id="achievementCanvas" class="hidden-canvas"></canvas>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,91 @@
+<view class="breakthrough-container">
+  <view class="header">
+    <text class="title">突破记录</text>
+    <text class="subtitle">记录您的攀岩突破和里程碑</text>
+  </view>
+
+  <view class="form-container">
+    <view class="form-item">
+      <text class="label">突破标题 <text class="required">*</text></text>
+      <input class="input" placeholder="例如：完成了第一次V5" model:value="{{title}}" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">突破类型</text>
+      <picker bindchange="bindTypeChange" value="{{typeIndex}}" range="{{typeArray}}" class="picker">
+        <view class="picker-content">
+          {{typeArray[typeIndex]}}
+          <view class="arrow">▼</view>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">日期 <text class="required">*</text></text>
+      <picker mode="date" value="{{date}}" bindchange="bindDateChange" class="picker">
+        <view class="picker-content">
+          {{date || 'yyyy/mm/dd'}}
+          <text class="calendar-icon">📅</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">地点 <text class="optional">(选填)</text></text>
+      <input class="input" placeholder="输入突破发生的地点" model:value="{{location}}" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">心得体会 <text class="optional">(选填)</text></text>
+      <textarea class="textarea" placeholder="记录下你的感受和经验..." model:value="{{experience}}"></textarea>
+    </view>
+
+    <button class="submit-btn" bindtap="submitBreakthrough">记录突破</button>
+  </view>
+
+  <!-- 烟花动画容器 -->
+  <view class="fireworks-container" wx:if="{{showFireworks}}">
+    <view class="firework" 
+          wx:for="{{fireworkElements}}" 
+          wx:key="index" 
+          style="left: {{item.left}}vw; background-color: {{item.color}}; animation-duration: {{item.animationDuration}}s; animation-delay: {{item.animationDelay}}s;">
+    </view>
+  </view>
+
+  <!-- 突破记录列表 -->
+  <view class="breakthrough-list">
+    <view class="list-header" wx:if="{{breakthroughList.length > 0}}">
+      <text>突破记录</text>
+    </view>
+    <view class="breakthrough-card" wx:for="{{breakthroughList}}" wx:key="id">
+      <view class="card-header">
+        <view class="card-title">{{item.title}}</view>
+        <view class="card-actions">
+          <!-- 查看图标 - 自定义SVG -->
+          <view class="icon-view" bindtap="viewCardDetail" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/eye.svg"/>
+            </view>
+          </view>
+          <!-- 删除图标 - 自定义SVG -->
+          <view class="icon-delete" bindtap="deleteCard" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/delete.svg"/>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="card-content">
+        <view class="card-row">
+          <text class="card-label">日期：</text>
+          <text class="card-value">{{item.date}}</text>
+        </view>
+        <view class="card-row">
+          <text class="card-label">类型：</text>
+          <text class="card-type-badge">{{item.type}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view> 
