@@ -106,6 +106,12 @@
       <image src="../../assets/upload.svg" mode="aspectFit"></image>
       <text>生成成就卡片</text>
     </button>
+    
+    <!-- 添加导出PDF按钮 -->
+    <button class="achievement-button export-pdf-button" bindtap="exportPDF">
+      <image src="../../assets/share.svg" mode="aspectFit"></image>
+      <text>分享突破记录</text>
+    </button>
   </view>
 
   <!-- 成就卡片弹窗 -->

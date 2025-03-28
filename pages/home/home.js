@@ -401,6 +401,221 @@ Component({
           });
         });
     },
+
+    // 导出PDF
+    exportPDF() {
+      wx.showLoading({
+        title: '正在生成报告...',
+      });
+      
+      try {
+        // 从本地存储获取数据
+        const breakthroughs = wx.getStorageSync('breakthroughs') || [];
+        const climbingRoutes = wx.getStorageSync('climbingRoutes') || [];
+        const trainingRecords = wx.getStorageSync('trainingRecords') || [];
+        
+        // 生成文本报告
+        let reportText = '攀岩记录报告\n\n';
+        
+        // 添加统计数据
+        reportText += '统计数据:\n';
+        reportText += `训练天数: ${this.data.statsData.trainingDays}\n`;
+        reportText += `突破次数: ${this.data.statsData.breakthroughCount}\n`;
+        reportText += `抱石攀爬数量: ${this.data.statsData.boulderingCount}\n`;
+        reportText += `先锋攀爬次数: ${this.data.statsData.leadClimbingCount}\n`;
+        reportText += `攀岩刷线时间: ${this.data.statsData.climbingTime.hours}小时${this.data.statsData.climbingTime.minutes}分钟\n`;
+        reportText += `训练时间: ${this.data.statsData.trainingTime.hours}小时${this.data.statsData.trainingTime.minutes}分钟\n\n`;
+        
+        // 添加突破记录
+        reportText += '突破记录:\n';
+        if (breakthroughs.length === 0) {
+          reportText += '暂无突破记录\n\n';
+        } else {
+          breakthroughs.forEach((item, index) => {
+            if (item && item.date) {
+              reportText += `${index + 1}. 日期: ${item.date}\n`;
+              reportText += `   难度: ${item.difficulty}\n`;
+              reportText += `   描述: ${item.description || '无'}\n\n`;
+            }
+          });
+        }
+        
+        // 添加攀爬记录
+        reportText += '攀爬记录:\n';
+        if (climbingRoutes.length === 0) {
+          reportText += '暂无攀爬记录\n\n';
+        } else {
+          climbingRoutes.forEach((item, index) => {
+            if (item && item.date) {
+              reportText += `${index + 1}. 日期: ${item.date}\n`;
+              reportText += `   地点: ${item.location || '未指定'}\n`;
+              reportText += `   训练时间: ${item.trainingTime || 0}分钟\n`;
+              
+              if (item.routes && item.routes.length > 0) {
+                reportText += '   路线:\n';
+                item.routes.forEach(route => {
+                  reportText += `     - 类型: ${route.type}, 难度: ${route.difficulty}, 数量: ${route.quantity}\n`;
+                });
+              }
+              
+              reportText += '\n';
+            }
+          });
+        }
+        
+        // 添加训练记录
+        reportText += '训练记录:\n';
+        if (trainingRecords.length === 0) {
+          reportText += '暂无训练记录\n\n';
+        } else {
+          trainingRecords.forEach((item, index) => {
+            if (item && item.date) {
+              reportText += `${index + 1}. 日期: ${item.date}\n`;
+              reportText += `   训练类型: ${item.trainingType || '未指定'}\n`;
+              reportText += `   持续时间: ${item.duration || 0}分钟\n`;
+              reportText += `   备注: ${item.notes || '无'}\n\n`;
+            }
+          });
+        }
+        
+        // 将文本保存为文件
+        const fs = wx.getFileSystemManager();
+        const filePath = `${wx.env.USER_DATA_PATH}/climbing_report.txt`;
+        
+        fs.writeFile({
+          filePath: filePath,
+          data: reportText,
+          encoding: 'utf8',
+          success: () => {
+            wx.hideLoading();
+            
+            // 显示导出选项
+            wx.showActionSheet({
+              itemList: ['分享成就'],
+              success: (res) => {
+                if (res.tapIndex === 0) {
+                  // 保存到手机
+                  this.shareReport(filePath);
+                }
+              },
+              fail: () => {
+                wx.showToast({
+                  title: '操作取消',
+                  icon: 'none'
+                });
+              }
+            });
+          },
+          fail: (err) => {
+            console.error('写入文件失败:', err);
+            wx.hideLoading();
+            wx.showToast({
+              title: '导出失败',
+              icon: 'none'
+            });
+          }
+        });
+      } catch (error) {
+        console.error('导出报告出错:', error);
+        wx.hideLoading();
+        wx.showToast({
+          title: '导出失败',
+          icon: 'none'
+        });
+      }
+    },
+    
+    // 保存报告到设备
+    saveReportToDevice(filePath) {
+      // 尝试复制到相册或文档目录
+      wx.saveFileToDisk({
+        filePath: filePath,
+        success: () => {
+          wx.showToast({
+            title: '报告已保存',
+            icon: 'success'
+          });
+        },
+        fail: (err) => {
+          console.error('保存文件失败:', err);
+          // 如果不支持saveFileToDisk，尝试其他方法
+          this.fallbackSaveReport(filePath);
+        }
+      });
+    },
+    
+    // 备用保存方法
+    fallbackSaveReport(filePath) {
+      // 尝试使用文件管理器打开
+      wx.openDocument({
+        filePath: filePath,
+        fileType: 'txt',
+        success: () => {
+          wx.showToast({
+            title: '请手动保存文件',
+            icon: 'none',
+            duration: 2000
+          });
+        },
+        fail: (err) => {
+          console.error('打开文件失败:', err);
+          wx.showToast({
+            title: '无法保存文件',
+            icon: 'none'
+          });
+        }
+      });
+    },
+    
+    // 分享报告
+    shareReport(filePath) {
+      wx.shareFileMessage({
+        filePath: filePath,
+        success: () => {
+          wx.showToast({
+            title: '分享成功',
+            icon: 'success'
+          });
+        },
+        fail: (err) => {
+          console.error('分享文件失败:', err);
+          
+          // 尝试备用分享方法
+          wx.showModal({
+            title: '分享失败',
+            content: '是否尝试其他分享方式？',
+            success: (res) => {
+              if (res.confirm) {
+                this.fallbackShareReport(filePath);
+              }
+            }
+          });
+        }
+      });
+    },
+    
+    // 备用分享方法
+    fallbackShareReport(filePath) {
+      // 尝试使用系统分享
+      wx.openDocument({
+        filePath: filePath,
+        fileType: 'txt',
+        success: () => {
+          wx.showToast({
+            title: '请使用系统分享功能',
+            icon: 'none',
+            duration: 2000
+          });
+        },
+        fail: (err) => {
+          console.error('打开文件失败:', err);
+          wx.showToast({
+            title: '无法分享文件',
+            icon: 'none'
+          });
+        }
+      });
+    },
   },
 
   /**

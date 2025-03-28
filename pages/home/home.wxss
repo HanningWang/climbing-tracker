@@ -330,6 +330,8 @@
 /* 添加成就卡片按钮样式 */
 .achievement-button-container {
   display: flex;
+  gap: 30rpx;
+  flex-direction: column;
   justify-content: center;
   margin: 30rpx 0;
 }

@@ -96,9 +96,9 @@
   <view class="tab-content" wx:if="{{activeTab === 'execute'}}">
     <view class="execute-container">
       <view class="form-container">
-        <view class="form-title">开始新训练</view>
-        
-        <view class="form-item">
+      
+        <view class="form-item" wx:if="{{!onExecution}}">
+          <view class="form-title">开始新训练</view>
           <text class="label">选择训练计划</text>
           <picker bindchange="selectTrainingPlan" value="{{selectedPlanIndex}}" range="{{trainingPlanNames}}" class="picker">
             <view class="picker-content">
@@ -106,6 +106,9 @@
               <view class="arrow">▼</view>
             </view>
           </picker>
+        </view>
+        <view wx:else class="plan-name">
+          <text class="plan-name-text">{{selectedPlan.name}}</text>
         </view>
 
         <!-- 计时器 -->

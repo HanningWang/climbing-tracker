@@ -15,7 +15,6 @@ Component({
     planDuration: '',
     exerciseInput: '',
     exercises: [],
-    includePullUps: false,
     trainingPlans: [],
     showPlanDetail: false,
     currentPlan: null,
@@ -31,8 +30,8 @@ Component({
     timerSeconds: 0,
     timerInterval: null,
     isTimerRunning: false,
+    onExecution: false, // 添加训练执行状态标志
     completedExercises: [],
-    includePullUpsInExecution: false,
     trainingFeedback: '',
     trainingRecords: [],
     filteredRecords: [],
@@ -43,16 +42,26 @@ Component({
     attached() {
       this.loadTrainingPlans();
       this.loadTrainingRecords();
-      // 恢复计时器状态，并自动切换到执行训练标签（如果有正在进行的训练）
+      
+      // 恢复计时器状态
       const timerState = wx.getStorageSync('timerState');
       if (timerState) {
+        // 如果有正在进行的训练，自动切换到执行训练标签
         this.setData({ activeTab: 'execute' });
+        // 延迟恢复计时器状态，确保训练计划已加载
+        setTimeout(() => {
+          this.restoreTimerState();
+        }, 100);
       }
-      this.restoreTimerState();
     },
     detached() {
-      // 不在这里清除计时器，而是保存状态
-      this.saveTimerState();
+      // 保存计时器状态但不停止计时
+      this.saveTimerStateWithoutStopping();
+      
+      // 确保清除计时器，防止内存泄漏
+      if (this.data.timerInterval) {
+        clearInterval(this.data.timerInterval);
+      }
     }
   },
 
@@ -115,7 +124,6 @@ Component({
         completedExercises,
         timerSeconds,
         timerDisplay: this.formatTime(timerSeconds),
-        includePullUpsInExecution: false,
         trainingFeedback: ''
       });
     },
@@ -151,17 +159,7 @@ Component({
           
           if (timerSeconds <= 0) {
             // 计时结束
-            clearInterval(this.data.timerInterval);
-            this.setData({
-              isTimerRunning: false,
-              timerInterval: null
-            });
-            wx.showToast({
-              title: '训练时间到！',
-              icon: 'success'
-            });
-            // 清除保存的计时器状态
-            wx.removeStorageSync('timerState');
+            this._endTimer();
             return;
           }
           
@@ -179,9 +177,28 @@ Component({
         
         this.setData({
           isTimerRunning: true,
+          onExecution: true,
+          activeTab: 'execute', // 确保切换到执行训练选项卡
           timerInterval
         });
       }
+    },
+
+    // 新增辅助方法处理计时结束
+    _endTimer() {
+      clearInterval(this.data.timerInterval);
+      this.setData({
+        isTimerRunning: false,
+        timerInterval: null,
+        onExecution: false,
+        activeTab: 'plan' // 计时结束时切换到计划选项卡
+      });
+      wx.showToast({
+        title: '训练时间到！',
+        icon: 'success'
+      });
+      // 清除保存的计时器状态
+      wx.removeStorageSync('timerState');
     },
 
     // 重置计时器
@@ -192,11 +209,13 @@ Component({
       }
       
       // 重置为初始状态
-      const timerSeconds = parseInt(this.data.selectedPlan.duration) * 60;
+      const timerSeconds = this.data.selectedPlan ? parseInt(this.data.selectedPlan.duration) * 60 : 0;
       this.setData({
         timerSeconds,
         timerDisplay: this.formatTime(timerSeconds),
         isTimerRunning: false,
+        onExecution: false,
+        activeTab: 'plan', // 重置时切换到计划选项卡
         timerInterval: null
       });
       
@@ -212,16 +231,9 @@ Component({
       this.setData({ completedExercises });
     },
 
-    // 切换引体向上选项
-    togglePullUpsInExecution() {
-      this.setData({
-        includePullUpsInExecution: !this.data.includePullUpsInExecution
-      });
-    },
-
     // 保存训练记录
     saveTrainingRecord() {
-      const { selectedPlan, completedExercises, trainingFeedback, includePullUpsInExecution } = this.data;
+      const { selectedPlan, completedExercises, trainingFeedback } = this.data;
       
       if (!selectedPlan) {
         wx.showToast({
@@ -232,8 +244,8 @@ Component({
       }
       
       // 计算完成的项目数量
-      const completedCount = completedExercises.filter(Boolean).length + (includePullUpsInExecution ? 1 : 0);
-      const totalCount = selectedPlan.exercises.length + (includePullUpsInExecution ? 1 : 0);
+      const completedCount = completedExercises.filter(Boolean).length;
+      const totalCount = selectedPlan.exercises.length;
       
       // 创建新记录
       const newRecord = {
@@ -244,7 +256,7 @@ Component({
         duration: selectedPlan.duration,
         completedCount,
         totalCount,
-        feedback: trainingFeedback,
+        feedback: trainingFeedback.trim(),
         createdAt: new Date().toISOString()
       };
       
@@ -252,35 +264,36 @@ Component({
       const trainingRecords = [newRecord, ...this.data.trainingRecords];
       
       // 保存到本地存储
-      this.saveTrainingRecords(trainingRecords);
-      
-      // 更新状态并重置表单
-      this.setData({
-        trainingRecords,
-        filteredRecords: trainingRecords,
-        selectedPlanIndex: -1,
-        selectedPlan: null,
-        completedExercises: [],
-        trainingFeedback: '',
-        includePullUpsInExecution: false,
-        timerDisplay: '00:00:00',
-        timerSeconds: 0,
-        isTimerRunning: false
-      });
-      
-      // 清除计时器
-      if (this.data.timerInterval) {
-        clearInterval(this.data.timerInterval);
-        this.setData({ timerInterval: null });
+      if (this.saveTrainingRecords(trainingRecords)) {
+        // 更新状态并重置表单
+        this.setData({
+          trainingRecords,
+          filteredRecords: trainingRecords,
+          selectedPlanIndex: -1,
+          selectedPlan: null,
+          completedExercises: [],
+          trainingFeedback: '',
+          timerDisplay: '00:00:00',
+          timerSeconds: 0,
+          isTimerRunning: false,
+          onExecution: false,
+          activeTab: 'plan' // 保存记录后切换到计划选项卡
+        });
+        
+        // 清除计时器
+        if (this.data.timerInterval) {
+          clearInterval(this.data.timerInterval);
+          this.setData({ timerInterval: null });
+        }
+        
+        // 清除保存的计时器状态
+        wx.removeStorageSync('timerState');
+        
+        wx.showToast({
+          title: '训练记录已保存',
+          icon: 'success'
+        });
       }
-      
-      // 清除保存的计时器状态
-      wx.removeStorageSync('timerState');
-      
-      wx.showToast({
-        title: '训练记录已保存',
-        icon: 'success'
-      });
     },
 
     // 更改过滤日期
@@ -310,23 +323,38 @@ Component({
     // 保存训练记录到本地存储
     saveTrainingRecords(records) {
       try {
-        wx.setStorageSync('trainingRecords', records);
+        wx.setStorageSync('trainingRecords', records || []);
+        return true;
       } catch (e) {
         console.error('保存训练记录失败', e);
+        wx.showToast({
+          title: '保存失败，请重试',
+          icon: 'none'
+        });
+        return false;
       }
     },
 
     // 从本地存储加载训练记录
     loadTrainingRecords() {
       try {
-        
-        const trainingRecords = wx.getStorageSync('trainingRecords');
+        const trainingRecords = wx.getStorageSync('trainingRecords') || [];
         this.setData({
           trainingRecords,
           filteredRecords: trainingRecords
         });
+        return trainingRecords;
       } catch (e) {
         console.error('加载训练记录失败', e);
+        wx.showToast({
+          title: '加载失败，请重试',
+          icon: 'none'
+        });
+        this.setData({
+          trainingRecords: [],
+          filteredRecords: []
+        });
+        return [];
       }
     },
 
@@ -369,16 +397,9 @@ Component({
       });
     },
 
-    // 切换引体向上选项
-    togglePullUps() {
-      this.setData({
-        includePullUps: !this.data.includePullUps
-      });
-    },
-
     // 创建训练计划
     createPlan() {
-      const { planName, planDuration, exercises, includePullUps } = this.data;
+      const { planName, planDuration, exercises } = this.data;
       
       // 验证输入
       if (!planName.trim()) {
@@ -389,7 +410,7 @@ Component({
         return;
       }
 
-      if (!planDuration || isNaN(planDuration)) {
+      if (!planDuration || isNaN(planDuration) || parseInt(planDuration) <= 0) {
         wx.showToast({
           title: '请输入有效的训练时长',
           icon: 'none'
@@ -397,7 +418,7 @@ Component({
         return;
       }
 
-      if (exercises.length === 0 && !includePullUps) {
+      if (exercises.length === 0) {
         wx.showToast({
           title: '请添加至少一个训练项目',
           icon: 'none'
@@ -405,18 +426,12 @@ Component({
         return;
       }
 
-      // 准备训练项目列表
-      let finalExercises = [...exercises];
-      if (includePullUps) {
-        finalExercises.push('引体向上');
-      }
-
       // 创建新计划
       const newPlan = {
         id: Date.now().toString(),
-        name: planName,
-        duration: planDuration,
-        exercises: finalExercises,
+        name: planName.trim(),
+        duration: parseInt(planDuration),
+        exercises: [...exercises],
         createdAt: new Date().toISOString()
       };
 
@@ -424,25 +439,24 @@ Component({
       const trainingPlans = [...this.data.trainingPlans, newPlan];
       
       // 保存到本地存储
-      this.saveTrainingPlans(trainingPlans);
-      
-      // 更新状态并重置表单
-      this.setData({
-        trainingPlans,
-        planName: '',
-        planDuration: '',
-        exerciseInput: '',
-        exercises: [],
-        includePullUps: false
-      });
+      if (this.saveTrainingPlans(trainingPlans)) {
+        // 更新状态并重置表单
+        this.setData({
+          trainingPlans,
+          planName: '',
+          planDuration: '',
+          exerciseInput: '',
+          exercises: []
+        });
 
-      // 更新训练计划名称列表
-      this.updateTrainingPlanNames();
+        // 更新训练计划名称列表
+        this.updateTrainingPlanNames();
 
-      wx.showToast({
-        title: '计划创建成功',
-        icon: 'success'
-      });
+        wx.showToast({
+          title: '计划创建成功',
+          icon: 'success'
+        });
+      }
     },
 
     // 查看计划详情
@@ -513,22 +527,39 @@ Component({
     // 保存训练计划到本地存储
     saveTrainingPlans(plans) {
       try {
-        wx.setStorageSync('trainingPlans', plans);
+        wx.setStorageSync('trainingPlans', plans || []);
+        return true;
       } catch (e) {
         console.error('保存训练计划失败', e);
+        wx.showToast({
+          title: '保存失败，请重试',
+          icon: 'none'
+        });
+        return false;
       }
     },
 
     // 从本地存储加载训练计划
     loadTrainingPlans() {
       try {
-        const plans = wx.getStorageSync('trainingPlans');
-        console.log('Get training plans ' + plans)
+        const plans = wx.getStorageSync('trainingPlans') || [];
+        const planNames = plans.map(item => item.name);
         this.setData({
-          trainingPlans: plans
+          trainingPlans: plans,
+          trainingPlanNames: planNames
         });
+        return plans;
       } catch (e) {
         console.error('加载训练计划失败', e);
+        wx.showToast({
+          title: '加载失败，请重试',
+          icon: 'none'
+        });
+        this.setData({
+          trainingPlans: [],
+          trainingPlanNames: []
+        });
+        return [];
       }
     },
 
@@ -583,22 +614,106 @@ Component({
     // 保存计时器状态但不停止计时
     saveTimerStateWithoutStopping() {
       // 保存当前计时器状态到本地存储
-      if (this.data.selectedPlan) {
-        const timerState = {
-          isRunning: this.data.isTimerRunning,
-          seconds: this.data.timerSeconds,
-          selectedPlanIndex: this.data.selectedPlanIndex,
-          completedExercises: this.data.completedExercises,
-          trainingFeedback: this.data.trainingFeedback,
-          lastTimestamp: Date.now()
-        };
-        
-        try {
-          wx.setStorageSync('timerState', timerState);
-        } catch (e) {
-          console.error('保存计时器状态失败', e);
-        }
+      if (!this.data.selectedPlan) return;
+      
+      const timerState = {
+        isRunning: this.data.isTimerRunning,
+        seconds: this.data.timerSeconds,
+        selectedPlanIndex: this.data.selectedPlanIndex,
+        completedExercises: this.data.completedExercises,
+        trainingFeedback: this.data.trainingFeedback,
+        onExecution: this.data.onExecution,
+        lastTimestamp: Date.now()
+      };
+      
+      try {
+        wx.setStorageSync('timerState', timerState);
+      } catch (e) {
+        console.error('保存计时器状态失败', e);
       }
+    },
+
+    // 恢复计时器状态
+    restoreTimerState() {
+      try {
+        const timerState = wx.getStorageSync('timerState');
+        
+        if (!timerState || !this.data.trainingPlans || this.data.trainingPlans.length === 0) {
+          return;
+        }
+        
+        // 计算经过的时间（如果计时器在运行）
+        let secondsElapsed = 0;
+        if (timerState.isRunning && timerState.lastTimestamp) {
+          secondsElapsed = Math.floor((Date.now() - timerState.lastTimestamp) / 1000);
+        }
+        
+        // 确保selectedPlanIndex在有效范围内
+        const selectedPlanIndex = Math.min(timerState.selectedPlanIndex, this.data.trainingPlans.length - 1);
+        if (selectedPlanIndex < 0) return;
+        
+        const selectedPlan = this.data.trainingPlans[selectedPlanIndex];
+        
+        // 更新计时器秒数
+        const timerSeconds = Math.max(0, timerState.seconds - secondsElapsed);
+        
+        // 恢复状态
+        const onExecution = timerState.onExecution || false;
+        
+        this.setData({
+          selectedPlanIndex,
+          selectedPlan,
+          completedExercises: timerState.completedExercises || [],
+          trainingFeedback: timerState.trainingFeedback || '',
+          timerSeconds,
+          timerDisplay: this.formatTime(timerSeconds),
+          onExecution
+        });
+        
+        // 如果计时器应该在运行且还有剩余时间，重新启动它
+        if (timerState.isRunning && timerSeconds > 0) {
+          this._restartTimer(timerSeconds);
+        } else if (timerSeconds <= 0) {
+          // 如果时间已经结束，清除状态
+          wx.removeStorageSync('timerState');
+        }
+      } catch (e) {
+        console.error('恢复计时器状态失败', e);
+      }
+    },
+
+    // 新增辅助方法重启计时器
+    _restartTimer(seconds) {
+      // 清除现有计时器（如果有）
+      if (this.data.timerInterval) {
+        clearInterval(this.data.timerInterval);
+      }
+      
+      // 启动新计时器
+      const timerInterval = setInterval(() => {
+        let seconds = this.data.timerSeconds;
+        
+        if (seconds <= 0) {
+          this._endTimer();
+          return;
+        }
+        
+        seconds--;
+        this.setData({
+          timerSeconds: seconds,
+          timerDisplay: this.formatTime(seconds)
+        });
+        
+        // 每隔一段时间保存状态
+        if (seconds % 30 === 0) {
+          this.saveTimerStateWithoutStopping();
+        }
+      }, 1000);
+      
+      this.setData({
+        isTimerRunning: true,
+        timerInterval
+      });
     },
 
     // 保存计时器状态
@@ -611,82 +726,6 @@ Component({
       
       // 保存当前计时器状态到本地存储
       this.saveTimerStateWithoutStopping();
-    },
-    
-    // 恢复计时器状态
-    restoreTimerState() {
-      try {
-        const timerState = wx.getStorageSync('timerState');
-        
-        if (timerState && this.data.trainingPlans && this.data.trainingPlans.length > 0) {
-          // 计算经过的时间（如果计时器在运行）
-          let secondsElapsed = 0;
-          if (timerState.isRunning && timerState.lastTimestamp) {
-            secondsElapsed = Math.floor((Date.now() - timerState.lastTimestamp) / 1000);
-          }
-          
-          // 确保selectedPlanIndex在有效范围内
-          const selectedPlanIndex = Math.min(timerState.selectedPlanIndex, this.data.trainingPlans.length - 1);
-          if (selectedPlanIndex >= 0) {
-            const selectedPlan = this.data.trainingPlans[selectedPlanIndex];
-            
-            // 更新计时器秒数
-            const timerSeconds = Math.max(0, timerState.seconds - secondsElapsed);
-            
-            // 恢复状态
-            this.setData({
-              selectedPlanIndex,
-              selectedPlan,
-              completedExercises: timerState.completedExercises || [],
-              trainingFeedback: timerState.trainingFeedback || '',
-              timerSeconds,
-              timerDisplay: this.formatTime(timerSeconds)
-            });
-            
-            // 如果计时器应该在运行且还有剩余时间，重新启动它
-            if (timerState.isRunning && timerSeconds > 0) {
-              // 清除现有计时器（如果有）
-              if (this.data.timerInterval) {
-                clearInterval(this.data.timerInterval);
-              }
-              
-              // 启动新计时器
-              const timerInterval = setInterval(() => {
-                let seconds = this.data.timerSeconds;
-                
-                if (seconds <= 0) {
-                  // 计时结束
-                  clearInterval(this.data.timerInterval);
-                  this.setData({
-                    isTimerRunning: false,
-                    timerInterval: null
-                  });
-                  wx.showToast({
-                    title: '训练时间到！',
-                    icon: 'success'
-                  });
-                  // 清除保存的计时器状态
-                  wx.removeStorageSync('timerState');
-                  return;
-                }
-                
-                seconds--;
-                this.setData({
-                  timerSeconds: seconds,
-                  timerDisplay: this.formatTime(seconds)
-                });
-              }, 1000);
-              
-              this.setData({
-                isTimerRunning: true,
-                timerInterval
-              });
-            }
-          }
-        }
-      } catch (e) {
-        console.error('恢复计时器状态失败', e);
-      }
     }
   }
 }) 

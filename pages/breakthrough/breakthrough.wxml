@@ -45,10 +45,18 @@
 
   <!-- 烟花动画容器 -->
   <view class="fireworks-container" wx:if="{{showFireworks}}">
-    <view class="firework" 
-          wx:for="{{fireworkElements}}" 
+    <!-- 烟花粒子 -->
+    <view wx:for="{{fireworkElements}}" 
           wx:key="index" 
-          style="left: {{item.left}}vw; background-color: {{item.color}}; animation-duration: {{item.animationDuration}}s; animation-delay: {{item.animationDelay}}s;">
+          class="firework"
+          style="left: {{item.left}}vw; top: {{item.top}}vh; width: {{item.size}}px; height: {{item.size}}px; background-color: {{item.color}}; opacity: {{item.opacity}}; animation-duration: {{item.animationDuration}}s; animation-delay: {{item.animationDelay}}s;">
+    </view>
+    
+    <!-- 闪光效果 -->
+    <view wx:for="{{sparkleElements}}" 
+          wx:key="index"
+          class="sparkle"
+          style="left: {{item.left}}vw; top: {{item.top}}vh; width: {{item.size}}px; height: {{item.size}}px; background-color: {{item.color || '#ffffff'}}; animation-duration: {{item.duration || 1}}s; animation-delay: {{item.delay}}s;">
     </view>
   </view>
 
@@ -57,17 +65,15 @@
     <view class="list-header" wx:if="{{breakthroughList.length > 0}}">
       <text>突破记录</text>
     </view>
-    <view class="breakthrough-card" wx:for="{{breakthroughList}}" wx:key="id">
+    <view class="breakthrough-card {{item.type === '成绩' ? 'card-type-achievement' : 'card-type-experience'}}" wx:for="{{breakthroughList}}" wx:key="id">
       <view class="card-header">
         <view class="card-title">{{item.title}}</view>
         <view class="card-actions">
-          <!-- 查看图标 - 自定义SVG -->
           <view class="icon-view" bindtap="viewCardDetail" data-id="{{item.id}}">
             <view class="svg-icon">
               <image src="../../assets/eye.svg"/>
             </view>
           </view>
-          <!-- 删除图标 - 自定义SVG -->
           <view class="icon-delete" bindtap="deleteCard" data-id="{{item.id}}">
             <view class="svg-icon">
               <image src="../../assets/delete.svg"/>
@@ -88,4 +94,50 @@
       </view>
     </view>
   </view>
+
+  <!-- 详情卡片弹窗 -->
+  <view class="detail-card-overlay" wx:if="{{showDetailCard}}" bindtap="closeDetailCard">
+    <view class="detail-card" catchtap="stopPropagation">
+      <view class="detail-card-header">
+        <text class="detail-card-title">突破记录详情</text>
+        <view class="close-btn" bindtap="closeDetailCard">×</view>
+      </view>
+      
+      <view class="detail-card-content">
+        <view class="detail-item">
+          <text class="detail-title">{{currentCard.title}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">日期：</text>
+          <text class="detail-value">{{currentCard.date}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">类型：</text>
+          <text class="detail-value">{{currentCard.type}}</text>
+        </view>
+        
+        <view class="detail-item" wx:if="{{currentCard.location}}">
+          <text class="detail-label">地点：</text>
+          <text class="detail-value">{{currentCard.location}}</text>
+        </view>
+        
+        <view class="detail-item" wx:if="{{currentCard.experience}}">
+          <text class="detail-label">心得体会：</text>
+          <text class="detail-value">{{currentCard.experience}}</text>
+        </view>
+      </view>
+      
+      <view class="detail-card-footer">
+        <button class="save-card-btn" bindtap="saveCardToAlbum">
+          <image src="../../assets/download.svg"></image>
+          <text>保存分享卡片</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 用于生成图片的隐藏canvas -->
+  <canvas type="2d" id="cardCanvas" style="width: 300px; height: 400px; position: fixed; left: -1000px; top: -1000px;"></canvas>
 </view> 
