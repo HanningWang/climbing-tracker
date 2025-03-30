@@ -22,7 +22,8 @@
       </picker>
     </view>
 
-    <view class="form-item">
+    <!-- 当攀岩类型不是速度时才显示难度选择器 -->
+    <view class="form-item" wx:if="{{typeArray[typeIndex] !== '速度'}}">
       <text class="label">难度</text>
       <picker bindchange="bindDifficultyChange" value="{{difficultyIndex}}" range="{{difficultyArray}}" class="picker">
         <view class="picker-content">
@@ -50,7 +51,13 @@
       <view class="list-item" wx:for="{{routesList}}" wx:key="index">
         <view class="list-col">{{item.type}}</view>
         <view class="list-col">{{item.difficulty}}</view>
-        <view class="list-col">{{item.quantity}}</view>
+        <view class="list-col">
+          <view class="quantity-control">
+            <text class="quantity-btn" bindtap="decreaseQuantity" data-index="{{index}}">-</text>
+            <text class="quantity-value">{{item.quantity}}</text>
+            <text class="quantity-btn" bindtap="increaseQuantity" data-index="{{index}}">+</text>
+          </view>
+        </view>
         <view class="list-col">
           <view class="delete-icon" bindtap="deleteListItem" data-index="{{index}}">
             <view class="svg-icon">
@@ -88,25 +95,152 @@
   </view>
 
   <view class="game-container" wx:if="{{activeTab === 'game'}}">
-    <text class="coming-soon">刷线游戏功能即将上线，敬请期待！</text>
+    <view wx:if="{{!isGameRunning}}">
+      <view class="game-title">刷线游戏</view>
+      
+      <view class="form-item">
+        <text class="label">攀岩地点</text>
+        <input class="input" placeholder="攀岩馆或岩场名称" model:value="{{gameLocation}}" />
+      </view>
+      
+      <view class="form-item">
+        <text class="label">攀岩类型</text>
+        <picker bindchange="bindGameTypeChange" value="{{gameTypeIndex}}" range="{{gameTypeArray}}" class="picker">
+          <view class="picker-content">
+            {{gameTypeArray[gameTypeIndex]}}
+            <view class="arrow">▼</view>
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="label">游戏时长（分钟）</text>
+        <input class="input" type="number" placeholder="输入游戏时长" model:value="{{gameDuration}}" />
+      </view>
+      
+      <view class="form-item">
+        <text class="label">出手次数</text>
+        <input class="input" type="number" placeholder="输入出手次数" model:value="{{gameAttempts}}" />
+      </view>
+      
+      <button class="game-start-btn" bindtap="startGame">开始游戏 ({{gameDuration}}分钟)</button>
+    </view>
+    
+    <view wx:else class="game-running-container">
+      <view class="game-header">
+        <view class="game-timer">
+          <image src="../../assets/timer-l.svg"></image>
+          {{gameTimeDisplay}}
+        </view>
+        <view class="game-attempts">
+          <text>已出手: </text>
+          <text class="game-attempts-number">{{gameRoutes.length}}/{{gameAttempts}}</text>
+        </view>
+        <view class="game-location-info">{{gameLocation}} - {{gameTypeArray[gameTypeIndex]}}</view>
+      </view>
+      
+      <view class="difficulty-grid">
+        <view wx:if="{{gameTypeArray[gameTypeIndex] === '抱石'}}" class="difficulty-grid-bouldering">
+          <view class="difficulty-item" wx:for="{{boulderingDifficulties}}" 
+                wx:key="*this" wx:for-index="idx">
+            <view class="difficulty-btn" bindtap="addGameRoute" data-difficulty="{{item}}" data-success="true">
+              {{item}}
+            </view>
+            <view class="difficulty-fail-btn" bindtap="addGameRoute" data-difficulty="{{item}}" data-success="false">
+              <text class="fail-icon">×</text>
+            </view>
+          </view>
+        </view>
+        
+        <view wx:else class="difficulty-grid-sport">
+          <view class="difficulty-item" wx:for="{{sportDifficulties}}" 
+                wx:key="*this" wx:for-index="idx">
+            <view class="difficulty-btn" bindtap="addGameRoute" data-difficulty="{{item}}" data-success="true">
+              {{item}}
+            </view>
+            <view class="difficulty-fail-btn" bindtap="addGameRoute" data-difficulty="{{item}}" data-success="false">
+              <text class="fail-icon">×</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 添加统计信息 -->
+      <view class="game-stats">
+        <view class="stat-item">
+          <text class="stat-label">总分:</text>
+          <text class="stat-value">{{gameScore}}</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">完成:</text>
+          <text class="stat-value success">{{gameSuccessCount}}</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-label">未完成:</text>
+          <text class="stat-value fail">{{gameFailCount}}</text>
+        </view>
+      </view>
+      
+      <!-- 尝试记录 -->
+      <view class="game-routes-list" wx:if="{{gameRoutes.length > 0}}">
+        <view class="game-routes-header">
+          <text>尝试记录</text>
+        </view>
+        <view class="game-route-header">
+          <text class="game-route-count-header">次数</text>
+          <text class="game-route-time-header">剩余时间</text>
+          <text class="game-route-difficulty-header">难度</text>
+          <text class="game-route-status-header">结果</text>
+        </view>
+        <view class="game-route-item" wx:for="{{gameRoutes}}" wx:key="timestamp" wx:for-index="idx">
+          <text class="game-route-count">{{idx + 1}}</text>
+          <text class="game-route-time">{{item.gameTime}}</text>
+          <text class="game-route-difficulty">{{item.difficulty}}</text>
+          <text class="game-route-status {{item.success ? 'success' : 'fail'}}">{{item.success ? '完成' : '未完成'}}</text>
+        </view>
+      </view>
+      
+      <!-- 游戏按钮 - 移到isGameRunning内部 -->
+      <view class="game-buttons">
+        <button class="game-end-btn" bindtap="endGame">结束游戏</button>
+        <button class="game-cancel-btn" bindtap="cancelGame">取消游戏</button>
+      </view>
+    </view>
   </view>
 
-  <!-- 历史记录 -->
-  <view class="history-container" wx:if="{{historyRecords.length > 0}}">
+  <!-- 普通刷线记录 - 仅在普通刷线标签页显示 -->
+  <view class="history-container" wx:if="{{activeTab === 'normal'}}">
     <view class="history-header">
       <text>刷线记录</text>
-      <picker mode="date" value="{{filterDate}}" bindchange="bindFilterDateChange" class="date-filter">
-        <view class="filter-content">
-          <text>筛选: {{filterDate || '全部日期'}}</text>
-          <text class="filter-icon">🔍</text>
-        </view>
-      </picker>
+      <view class="filter-container">
+        <picker mode="date" value="{{filterDate}}" bindchange="bindFilterDateChange" class="date-filter">
+          <view class="filter-content">
+            <text>筛选: {{filterDate || '全部日期'}}</text>
+            <text class="filter-icon">🔍</text>
+          </view>
+        </picker>
+        <view class="clear-filter" wx:if="{{filterDate}}" bindtap="clearDateFilter">×</view>
+      </view>
     </view>
 
-    <view class="record-card" wx:for="{{filteredRecords}}" wx:key="id">
+    <view class="record-card" wx:for="{{filteredRecords}}" wx:key="id" wx:if="{{!item.isGame}}">
+      <view class="card-header">
+        <view class="card-location-title">{{item.location}}</view>
+        <view class="card-actions">
+          <view class="icon-view" bindtap="viewRecordDetail" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/eye.svg"/>
+            </view>
+          </view>
+          <view class="icon-delete" bindtap="deleteRecord" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/delete.svg"/>
+            </view>
+          </view>
+        </view>
+      </view>
       
       <view class="card-content">
-        <view class="card-location-title">{{item.location}}</view>
         <view class="card-item">
           <text class="card-label">时间:</text>
           <text class="card-value">{{item.date}}</text>
@@ -120,9 +254,162 @@
           <text class="card-value">{{item.routes.length}}条</text>
         </view>
       </view>
-      <view class="card-actions">
-        <button class="view-btn" bindtap="viewRecordDetail" data-id="{{item.id}}">查看详情</button>
-        <button class="delete-btn" bindtap="deleteRecord" data-id="{{item.id}}">删除</button>
+    </view>
+    
+    <!-- 添加无记录提示 -->
+    <view class="no-records" wx:if="{{filteredRecords.length === 0 && filterDate}}">
+      <text>{{filterDate}} 没有刷线记录</text>
+      <view class="clear-filter-btn" bindtap="clearDateFilter">清除筛选</view>
+    </view>
+  </view>
+
+  <!-- 游戏记录 - 仅在游戏标签页显示 -->
+  <view class="history-container" wx:if="{{activeTab === 'game'}}">
+    <view class="history-header">
+      <text>游戏记录</text>
+      <view class="filter-container">
+        <picker mode="date" value="{{gameFilterDate}}" bindchange="bindGameFilterDateChange" class="date-filter">
+          <view class="filter-content">
+            <text>筛选: {{gameFilterDate || '全部日期'}}</text>
+            <text class="filter-icon">🔍</text>
+          </view>
+        </picker>
+        <view class="clear-filter" wx:if="{{gameFilterDate}}" bindtap="clearGameDateFilter">×</view>
+      </view>
+    </view>
+
+    <view class="record-card" wx:for="{{filteredGameRecords}}" wx:key="id">
+      <view class="card-header">
+        <view class="card-location-title">{{item.location}}</view>
+        <view class="card-actions">
+          <view class="icon-view" bindtap="viewGameRecordDetail" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/eye.svg"/>
+            </view>
+          </view>
+          <view class="icon-delete" bindtap="deleteGameRecord" data-id="{{item.id}}">
+            <view class="svg-icon">
+              <image src="../../assets/delete.svg"/>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="card-content">
+        <view class="card-item">
+          <text class="card-label">时间:</text>
+          <text class="card-value">{{item.date}}</text>
+        </view>
+        <view class="card-item">
+          <text class="card-label">游戏时长:</text>
+          <text class="card-value">{{item.actualGameTime || item.gameElapsedTime}}分钟</text>
+        </view>
+        <view class="card-item">
+          <text class="card-label">总分:</text>
+          <text class="card-value">{{item.gameScore}}分</text>
+        </view>
+        <view class="card-item">
+          <text class="card-label">完成率:</text>
+          <text class="card-value">{{item.formattedCompletionRate}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 添加无记录提示 -->
+    <view class="no-records" wx:if="{{filteredGameRecords.length === 0 && gameFilterDate}}">
+      <text>{{gameFilterDate}} 没有游戏记录</text>
+      <view class="clear-filter-btn" bindtap="clearGameDateFilter">清除筛选</view>
+    </view>
+  </view>
+
+  <!-- 普通记录详情卡片弹窗 -->
+  <view class="detail-card-overlay" wx:if="{{showDetailCard}}" bindtap="closeDetailCard">
+    <view class="detail-card" catchtap="stopPropagation">
+      <view class="detail-card-header">
+        <text class="detail-card-title">刷线记录详情</text>
+        <view class="close-btn" bindtap="closeDetailCard">×</view>
+      </view>
+      
+      <view class="detail-card-content">
+        <view class="detail-item">
+          <text class="detail-title">{{currentCard.location}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">日期：</text>
+          <text class="detail-value">{{currentCard.date}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">训练时间：</text>
+          <text class="detail-value">{{currentCard.trainingTime}} 分钟</text>
+        </view>
+        
+        <view class="detail-routes">
+          <text class="detail-label">路线记录：</text>
+          <view class="detail-routes-list">
+            <view class="detail-route-item" wx:for="{{currentCard.routes}}" wx:key="index">
+              <text class="detail-route-type">{{item.type}}</text>
+              <text class="detail-route-difficulty">{{item.difficulty}}</text>
+              <text class="detail-route-quantity">x {{item.quantity}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 游戏记录详情卡片弹窗 -->
+  <view class="detail-card-overlay" wx:if="{{showGameDetailCard}}" bindtap="closeGameDetailCard">
+    <view class="detail-card" catchtap="stopPropagation">
+      <view class="detail-card-header">
+        <text class="detail-card-title">游戏记录详情</text>
+        <view class="close-btn" bindtap="closeGameDetailCard">×</view>
+      </view>
+      
+      <view class="detail-card-content">
+        <view class="detail-item">
+          <text class="detail-title">{{currentGameCard.location}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">日期：</text>
+          <text class="detail-value">{{currentGameCard.date}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">游戏类型：</text>
+          <text class="detail-value">{{currentGameCard.gameType}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">游戏时长：</text>
+          <text class="detail-value">{{currentGameCard.actualGameTime || currentGameCard.gameElapsedTime}} 分钟</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">总分：</text>
+          <text class="detail-value">{{currentGameCard.gameScore}} 分</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">完成率：</text>
+          <text class="detail-value">{{currentGameCard.formattedCompletionRate}}</text>
+        </view>
+        
+        <view class="detail-game-routes" wx:if="{{currentGameCard.gameRoutes.length > 0}}">
+          <text class="detail-label">尝试记录：</text>
+          <view class="detail-game-routes-list">
+            <view class="detail-game-route-header">
+              <text class="detail-game-route-difficulty-header">难度</text>
+              <text class="detail-game-route-status-header">结果</text>
+            </view>
+            <view class="detail-game-route-item" wx:for="{{currentGameCard.gameRoutes}}" wx:key="timestamp">
+              <text class="detail-game-route-difficulty">{{item.difficulty}}</text>
+              <text class="detail-game-route-status {{item.success ? 'success' : 'fail'}}">{{item.success ? '完成' : '未完成'}}</text>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
   </view>

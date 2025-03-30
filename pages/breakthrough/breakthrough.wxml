@@ -64,8 +64,19 @@
   <view class="breakthrough-list">
     <view class="list-header" wx:if="{{breakthroughList.length > 0}}">
       <text>突破记录</text>
+      <view class="filter-container">
+        <picker mode="date" value="{{filterDate}}" bindchange="bindFilterDateChange" class="date-filter">
+          <view class="filter-content">
+            <text>筛选: {{filterDate || '全部日期'}}</text>
+            <text class="filter-icon">🔍</text>
+          </view>
+        </picker>
+        <view class="clear-filter" wx:if="{{filterDate}}" bindtap="clearDateFilter">×</view>
+      </view>
     </view>
-    <view class="breakthrough-card {{item.type === '成绩' ? 'card-type-achievement' : 'card-type-experience'}}" wx:for="{{breakthroughList}}" wx:key="id">
+    <view class="breakthrough-card {{item.type === '成绩' ? 'card-type-achievement' : 'card-type-experience'}}" 
+          wx:for="{{filteredBreakthroughList}}" 
+          wx:key="id">
       <view class="card-header">
         <view class="card-title">{{item.title}}</view>
         <view class="card-actions">
@@ -92,6 +103,12 @@
           <text class="card-type-badge">{{item.type}}</text>
         </view>
       </view>
+    </view>
+    
+    <!-- 添加无记录提示 -->
+    <view class="no-records" wx:if="{{filteredBreakthroughList.length === 0 && filterDate}}">
+      <text>{{filterDate}} 没有突破记录</text>
+      <view class="clear-filter-btn" bindtap="clearDateFilter">清除筛选</view>
     </view>
   </view>
 

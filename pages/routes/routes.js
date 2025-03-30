@@ -10,24 +10,105 @@ Component({
    * 组件的初始数据
    */
   data: {
+    // 普通刷线相关数据
     activeTab: 'normal',
     typeArray: ['抱石', '先锋', '速度'],
     typeIndex: 0,
-    difficultyArray: ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16'],
+    // 分开存储不同类型的难度数组
+    boulderingDifficulties: ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'],
+    sportDifficulties: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', '5.13a', '5.13b', '5.13c', '5.13d', '5.14a', '5.14b', '5.14c', '5.14d', '5.15a', '5.15b', '5.15c', '5.15d'],
+    difficultyArray: ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'], // 默认为抱石难度
     difficultyIndex: 0,
-    quantity: '',
+    quantity: 1,
+    routesList: [],
     location: '',
     date: '',
     trainingTime: '',
-    routesList: [],
     historyRecords: [],
     filteredRecords: [],
-    filterDate: ''
+    filterDate: '',
+    
+    // 游戏相关数据
+    isGameRunning: false,
+    gameTypeArray: ['抱石', '先锋'],
+    gameTypeIndex: 0,
+    gameLocation: '',
+    gameDuration: 120,
+    gameAttempts: 10,
+    gameTimeLeft: 0,
+    gameTimeDisplay: '00:00',
+    gameTimer: null,
+    gameRoutes: [],
+    gameScore: 0,
+    gameSuccessCount: 0,
+    gameFailCount: 0,
+    
+    // 游戏记录相关
+    gameRecords: [],
+    filteredGameRecords: [],
+    gameFilterDate: '',
+    showDetailCard: false,
+    currentCard: {},
+    showGameDetailCard: false,
+    currentGameCard: {},
+    gameStartTime: 0,
+    gameEndTime: 0
   },
 
   lifetimes: {
     attached: function() {
-      this.loadHistoryRecords();
+      this.loadRecords();
+      this.loadGameRecords();
+      
+      // 设置默认日期为今天
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      this.setData({
+        date: `${year}-${month}-${day}`
+      });
+      
+      // 检查是否有正在进行的游戏
+      this.checkForRunningGame();
+      
+      // 添加全局生命周期监听
+      wx.onAppShow(this.handleAppShow.bind(this));
+      wx.onAppHide(this.handleAppHide.bind(this));
+    },
+    detached: function() {
+      // 组件销毁时，不要结束游戏，只清理计时器
+      if (this.data.gameTimer) {
+        clearInterval(this.data.gameTimer);
+        this.setData({ gameTimer: null });
+      }
+      
+      // 保存游戏状态但不结束游戏
+      this.saveGameStateWithoutStopping();
+      
+      // 移除生命周期监听
+      wx.offAppShow(this.handleAppShow);
+      wx.offAppHide(this.handleAppHide);
+    }
+  },
+
+  // 页面生命周期处理
+  pageLifetimes: {
+    show: function() {
+      // 页面被显示时，检查是否有正在进行的游戏
+      this.checkForRunningGame();
+    },
+    
+    hide: function() {
+      // 页面被隐藏时，保存游戏状态并暂停计时器
+      if (this.data.isGameRunning) {
+        this.saveGameStateWithoutStopping();
+        
+        if (this.data.gameTimer) {
+          clearInterval(this.data.gameTimer);
+          this.setData({ gameTimer: null });
+        }
+      }
     }
   },
 
@@ -37,32 +118,51 @@ Component({
   methods: {
     switchTab(e) {
       const tab = e.currentTarget.dataset.tab;
+      
+      // 直接切换Tab
       this.setData({
         activeTab: tab
       });
+      
+      // 如果切换回游戏Tab，且游戏正在运行，恢复计时器
+      if (tab === 'game' && this.data.isGameRunning && !this.data.gameTimer) {
+        // 重新计算剩余时间
+        const now = Date.now();
+        const timeLeft = Math.max(0, Math.floor((this.data.gameEndTime - now) / 1000));
+        
+        if (timeLeft <= 0) {
+          this.endGame();
+        } else {
+          // 更新剩余时间和显示
+          const timeDisplay = this.formatGameTime(timeLeft);
+          this.setData({ 
+            gameTimeLeft: timeLeft,
+            gameTimeDisplay: timeDisplay
+          });
+          
+          // 重新启动计时器
+          this.startGameTimer();
+        }
+      }
     },
 
     bindTypeChange(e) {
       const typeIndex = e.detail.value;
-      let difficultyArray = [];
       
-      // 根据攀岩类型设置对应的难度数组
-      if (this.data.typeArray[typeIndex] === '抱石') {
-        difficultyArray = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16'];
-      } else if (this.data.typeArray[typeIndex] === '先锋') {
-        difficultyArray = ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10a', '5.10b', '5.10c', '5.10d', '5.11a', '5.11b', '5.11c', '5.11d', '5.12a', '5.12b', '5.12c', '5.12d', '5.13a', '5.13b', '5.13c', '5.13d', '5.14a', '5.14b', '5.14c', '5.14d', '5.15a', '5.15b', '5.15c', '5.15d'];
-      } else if (this.data.typeArray[typeIndex] === '速度') {
-        const times = [];
-        for (let i = 1; i <= 20; i++) {
-          times.push(`${i}次`);
-        }
-        difficultyArray = times;
+      // 根据选择的类型更新难度数组
+      let difficultyArray;
+      if (typeIndex == 0) { // 抱石
+        difficultyArray = this.data.boulderingDifficulties;
+      } else if (typeIndex == 1) { // 先锋
+        difficultyArray = this.data.sportDifficulties;
+      } else { // 速度
+        difficultyArray = this.data.speedDifficulties;
       }
       
       this.setData({
-        typeIndex,
-        difficultyArray,
-        difficultyIndex: 0
+        typeIndex: typeIndex,
+        difficultyArray: difficultyArray,
+        difficultyIndex: 0 // 重置难度选择
       });
     },
 
@@ -79,9 +179,7 @@ Component({
     },
 
     addToList() {
-      const { typeArray, typeIndex, difficultyArray, difficultyIndex, quantity } = this.data;
-      
-      if (!quantity || quantity <= 0) {
+      if (!this.data.quantity || this.data.quantity <= 0) {
         wx.showToast({
           title: '请输入有效数量',
           icon: 'none'
@@ -89,17 +187,30 @@ Component({
         return;
       }
       
-      const newRoute = {
-        type: typeArray[typeIndex],
-        difficulty: difficultyArray[difficultyIndex],
-        quantity: parseInt(quantity)
-      };
+      const type = this.data.typeArray[this.data.typeIndex];
+      let newRoute;
+      
+      if (type === '速度') {
+        // 速度类型不需要难度
+        newRoute = {
+          type: type,
+          difficulty: '速度',  // 或者可以设为空字符串或其他默认值
+          quantity: parseInt(this.data.quantity)
+        };
+      } else {
+        // 抱石和先锋类型需要难度
+        newRoute = {
+          type: type,
+          difficulty: this.data.difficultyArray[this.data.difficultyIndex],
+          quantity: parseInt(this.data.quantity)
+        };
+      }
       
       const routesList = [...this.data.routesList, newRoute];
       
       this.setData({
         routesList,
-        quantity: ''
+        quantity: 1
       });
     },
 
@@ -114,9 +225,7 @@ Component({
     },
 
     saveRecord() {
-      const { routesList, location, date, trainingTime } = this.data;
-      
-      if (routesList.length === 0) {
+      if (this.data.routesList.length === 0) {
         wx.showToast({
           title: '请添加至少一条路线',
           icon: 'none'
@@ -124,7 +233,15 @@ Component({
         return;
       }
       
-      if (!date) {
+      if (!this.data.location) {
+        wx.showToast({
+          title: '请输入地点',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      if (!this.data.date) {
         wx.showToast({
           title: '请选择日期',
           icon: 'none'
@@ -132,40 +249,33 @@ Component({
         return;
       }
       
-      if (!trainingTime || trainingTime <= 0) {
+      if (!this.data.trainingTime) {
         wx.showToast({
-          title: '请输入有效训练时间',
+          title: '请输入训练时间',
           icon: 'none'
         });
         return;
       }
       
-      // 创建新记录
       const newRecord = {
         id: Date.now().toString(),
-        date,
-        location: location || '未知地点',
-        trainingTime: parseInt(trainingTime),
-        routes: [...routesList]
+        location: this.data.location,
+        date: this.data.date,
+        trainingTime: this.data.trainingTime,
+        routes: this.data.routesList,
+        isGame: false
       };
       
-      // 获取现有记录
-      const historyRecords = wx.getStorageSync('climbingRoutes') || [];
-      console.log("刷线记录 " + historyRecords);
-      
-      // 添加新记录
-      const updatedRecords = [newRecord, ...historyRecords];
+      const records = [...this.data.historyRecords, newRecord];
       
       // 保存到本地存储
-      wx.setStorageSync('climbingRoutes', updatedRecords);
+      wx.setStorageSync('climbingRoutes', records);
       
-      // 更新状态
       this.setData({
-        historyRecords: updatedRecords,
-        filteredRecords: updatedRecords
+        historyRecords: records,
+        filteredRecords: records
       });
       
-      // 清空表单
       this.clearForm();
       
       wx.showToast({
@@ -176,26 +286,20 @@ Component({
 
     clearForm() {
       this.setData({
-        typeIndex: 0,
-        difficultyIndex: 0,
-        quantity: '',
+        routesList: [],
         location: '',
-        date: '',
-        trainingTime: '',
-        routesList: []
+        trainingTime: ''
       });
-      
-      // 重新设置难度数组
-      this.bindTypeChange({ detail: { value: 0 } });
     },
 
-    loadHistoryRecords() {
-      const historyRecords = wx.getStorageSync('climbingRoutes') || [];
-      console.log("刷线记录 " + JSON.stringify(historyRecords));
+    loadRecords() {
+      const records = wx.getStorageSync('climbingRoutes') || [];
+      // 只加载非游戏记录
+      const normalRecords = records.filter(record => !record.isGame);
       
       this.setData({
-        historyRecords,
-        filteredRecords: historyRecords
+        historyRecords: normalRecords,
+        filteredRecords: normalRecords
       });
     },
 
@@ -204,19 +308,46 @@ Component({
       
       this.setData({ filterDate });
       
-      if (filterDate) {
-        // 按日期筛选
-        const filteredRecords = this.data.historyRecords.filter(record => 
-          record.date === filterDate
-        );
-        
-        this.setData({ filteredRecords });
-      } else {
-        // 显示所有记录
+      this.filterRecords();
+    },
+
+    filterRecords() {
+      if (!this.data.filterDate) {
         this.setData({
           filteredRecords: this.data.historyRecords
         });
+        return;
       }
+      
+      const filtered = this.data.historyRecords.filter(record => 
+        record.date === this.data.filterDate
+      );
+      
+      this.setData({
+        filteredRecords: filtered
+      });
+    },
+
+    viewRecordDetail(e) {
+      const id = e.currentTarget.dataset.id;
+      const record = this.data.historyRecords.find(r => r.id === id);
+      
+      if (record) {
+        this.setData({
+          showDetailCard: true,
+          currentCard: record
+        });
+      }
+    },
+
+    closeDetailCard() {
+      this.setData({
+        showDetailCard: false
+      });
+    },
+
+    stopPropagation() {
+      return;
     },
 
     deleteRecord(e) {
@@ -227,21 +358,22 @@ Component({
         content: '确定要删除这条记录吗？',
         success: (res) => {
           if (res.confirm) {
-            // 过滤掉要删除的记录
-            const historyRecords = this.data.historyRecords.filter(record => 
-              record.id !== id
-            );
+            // 从普通记录中删除
+            const updatedRecords = this.data.historyRecords.filter(r => r.id !== id);
             
-            // 更新本地存储
-            wx.setStorageSync('climbingRoutes', historyRecords);
+            // 获取所有记录（包括游戏记录）
+            const allRecords = wx.getStorageSync('climbingRoutes') || [];
+            // 保留游戏记录，删除指定的普通记录
+            const updatedAllRecords = allRecords.filter(r => r.id !== id);
             
-            // 更新状态
+            // 更新存储
+            wx.setStorageSync('climbingRoutes', updatedAllRecords);
+            
             this.setData({
-              historyRecords,
-              filteredRecords: this.data.filterDate 
-                ? historyRecords.filter(record => record.date === this.data.filterDate)
-                : historyRecords
+              historyRecords: updatedRecords
             });
+            
+            this.filterRecords();
             
             wx.showToast({
               title: '记录已删除',
@@ -252,34 +384,514 @@ Component({
       });
     },
 
-    viewRecordDetail(e) {
-      const id = e.currentTarget.dataset.id;
-      const record = this.data.historyRecords.find(record => record.id === id);
+    increaseQuantity(e) {
+      const index = e.currentTarget.dataset.index;
+      const routesList = [...this.data.routesList];
+      routesList[index].quantity += 1;
       
-      if (record) {
-        // 可以使用弹窗显示详情
-        wx.showModal({
-          title: '刷线详情',
-          content: this.formatRecordDetail(record),
-          showCancel: false,
-          confirmText: '关闭'
-        });
+      this.setData({
+        routesList
+      });
+    },
+
+    decreaseQuantity(e) {
+      const index = e.currentTarget.dataset.index;
+      const routesList = [...this.data.routesList];
+      
+      // 确保数量不小于1
+      if (routesList[index].quantity > 1) {
+        routesList[index].quantity -= 1;
         
-        // 或者也可以跳转到详情页面
-        // wx.navigateTo({
-        //   url: `/pages/route-detail/route-detail?id=${id}`
-        // });
+        this.setData({
+          routesList
+        });
       }
     },
 
-    formatRecordDetail(record) {
-      let detail = `日期: ${record.date}\n地点: ${record.location}\n训练时间: ${record.trainingTime}分钟\n\n路线详情:\n`;
+    // 游戏相关方法
+    bindGameTypeChange(e) {
+      this.setData({
+        gameTypeIndex: e.detail.value
+      });
+    },
+
+    startGame() {
+      if (!this.data.gameLocation) {
+        wx.showToast({
+          title: '请输入攀岩地点',
+          icon: 'none'
+        });
+        return;
+      }
       
-      record.routes.forEach((route, index) => {
-        detail += `${index + 1}. ${route.type} ${route.difficulty} x${route.quantity}\n`;
+      if (!this.data.gameDuration || this.data.gameDuration <= 0) {
+        wx.showToast({
+          title: '请输入有效游戏时长',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      if (!this.data.gameAttempts || this.data.gameAttempts <= 0) {
+        wx.showToast({
+          title: '请输入有效出手次数',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 设置游戏时间（分钟转秒）
+      const gameTimeLeft = parseInt(this.data.gameDuration) * 60;
+      const now = Date.now();
+      const gameEndTime = now + (gameTimeLeft * 1000);
+      
+      this.setData({
+        isGameRunning: true,
+        gameTimeLeft: gameTimeLeft,
+        gameTimeDisplay: this.formatTime(gameTimeLeft),
+        gameRoutes: [],
+        gameScore: 0,
+        gameSuccessCount: 0,
+        gameFailCount: 0,
+        gameStartTime: now,
+        gameEndTime: gameEndTime
       });
       
-      return detail;
+      // 启动游戏计时器
+      this.startGameTimer();
+    },
+    
+    startGameTimer() {
+      // 清除可能存在的旧计时器
+      if (this.data.gameTimer) {
+        clearInterval(this.data.gameTimer);
+      }
+      
+      const gameTimer = setInterval(() => {
+        // 计算剩余时间（基于当前时间和结束时间）
+        const now = Date.now();
+        const timeLeft = Math.max(0, Math.floor((this.data.gameEndTime - now) / 1000));
+        
+        if (timeLeft <= 0) {
+          // 游戏时间结束
+          clearInterval(this.data.gameTimer);
+          
+          // 自动结束游戏
+          this.endGame();
+        }
+        
+        this.setData({
+          gameTimeLeft: timeLeft,
+          gameTimeDisplay: this.formatTime(timeLeft)
+        });
+        
+        // 每隔30秒保存一次游戏状态
+        if (timeLeft % 30 === 0) {
+          this.saveGameStateWithoutStopping();
+        }
+      }, 1000);
+      
+      this.setData({
+        gameTimer: gameTimer
+      });
+    },
+    
+    formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    },
+    
+    addGameRoute(e) {
+      const difficulty = e.currentTarget.dataset.difficulty;
+      const success = e.currentTarget.dataset.success === "true";
+      console.log(success);
+      
+      // 计算得分
+      let score = 0;
+      if (success) {
+        // 根据难度计算得分
+        if (this.data.gameTypeArray[this.data.gameTypeIndex] === '抱石') {
+          // V0-V17 得分规则
+          const vGrade = parseInt(difficulty.replace('V', ''));
+          score = (vGrade + 1) * 100;
+        } else {
+          // 5.x 得分规则 - 基于sportDifficulties数组索引
+          const index = this.data.sportDifficulties.indexOf(difficulty);
+          if (index !== -1) {
+            score = (index + 1) * 100; // 数组中的第一个难度为100分，第二个为200分，依此类推
+          }
+        }
+      }
+
+      console.log(score)
+      
+      // 创建新的路线记录
+      const newRoute = {
+        difficulty: difficulty,
+        success: success,
+        score: score,
+        timestamp: Date.now(),
+        gameTime: this.data.gameTimeDisplay
+      };
+      
+      // 更新游戏数据
+      this.setData({
+        gameRoutes: [...this.data.gameRoutes, newRoute],
+        gameScore: this.data.gameScore + score,
+        gameSuccessCount: this.data.gameSuccessCount + (success ? 1 : 0),
+        gameFailCount: this.data.gameFailCount + (success ? 0 : 1)
+      });
+      
+      // 检查是否达到出手次数上限
+      if (this.data.gameRoutes.length >= this.data.gameAttempts) {
+        // 自动结束游戏
+        this.endGame();
+      }
+    },
+    
+    endGame() {
+      // 停止计时器
+      if (this.data.gameTimer) {
+        clearInterval(this.data.gameTimer);
+        this.setData({ gameTimer: null });
+      }
+      
+      // 如果没有记录任何路线，直接取消游戏
+      if (this.data.gameRoutes.length === 0) {
+        this.cancelGame();
+        return;
+      }
+      
+      // 创建游戏记录
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      // 计算游戏实际持续时间（分钟）
+      const elapsedTimeInSeconds = this.data.gameDuration * 60 - this.data.gameTimeLeft;
+      const elapsedTimeInMinutes = Math.ceil(elapsedTimeInSeconds / 60);
+      
+      // 计算完成率
+      const totalAttempts = this.data.gameSuccessCount + this.data.gameFailCount;
+      const completionRate = totalAttempts > 0 
+        ? Math.round((this.data.gameSuccessCount / totalAttempts) * 100) 
+        : 0;
+      const formattedCompletionRate = (totalAttempts > 0 
+        ? (this.data.gameSuccessCount / totalAttempts * 100).toFixed(1) 
+        : '0.0') + '%';
+      
+      const gameRecord = {
+        id: Date.now().toString(),
+        location: this.data.gameLocation,
+        date: dateStr,
+        gameDuration: this.data.gameDuration,
+        gameElapsedTime: elapsedTimeInMinutes,
+        actualGameTime: elapsedTimeInMinutes, // 添加实际游戏时长
+        gameType: this.data.gameTypeArray[this.data.gameTypeIndex],
+        gameScore: this.data.gameScore,
+        gameSuccessCount: this.data.gameSuccessCount,
+        gameFailCount: this.data.gameFailCount,
+        gameCompletionRate: completionRate,
+        formattedCompletionRate: formattedCompletionRate,
+        gameRoutes: this.data.gameRoutes,
+        isGame: true
+      };
+      
+      // 保存游戏记录
+      const gameRecords = [...this.data.gameRecords, gameRecord];
+      
+      // 保存到单独的存储
+      wx.setStorageSync('climbingGameRecords', gameRecords);
+      
+      this.setData({
+        gameRecords: gameRecords,
+        filteredGameRecords: gameRecords,
+        isGameRunning: false
+      });
+      
+      // 清除保存的游戏状态
+      wx.removeStorageSync('climbingGameState');
+      
+      wx.showToast({
+        title: '游戏记录已保存',
+        icon: 'success'
+      });
+    },
+    
+    cancelGame() {
+      // 停止计时器
+      if (this.data.gameTimer) {
+        clearInterval(this.data.gameTimer);
+        this.setData({ gameTimer: null });
+      }
+      
+      // 重置游戏状态
+      this.setData({
+        isGameRunning: false,
+        gameRoutes: [],
+        gameScore: 0,
+        gameSuccessCount: 0,
+        gameFailCount: 0
+      });
+      
+      // 清除保存的游戏状态
+      wx.removeStorageSync('climbingGameState');
+    },
+    
+    // 处理小程序显示事件
+    handleAppShow() {
+      // 小程序回到前台时，检查游戏状态
+      this.checkForRunningGame();
+    },
+    
+    // 处理小程序隐藏事件
+    handleAppHide() {
+      // 小程序进入后台时，保存游戏状态
+      if (this.data.isGameRunning) {
+        this.saveGameStateWithoutStopping();
+        
+        if (this.data.gameTimer) {
+          clearInterval(this.data.gameTimer);
+          this.setData({ gameTimer: null });
+        }
+      }
+    },
+    
+    // 保存游戏状态但不停止游戏
+    saveGameStateWithoutStopping() {
+      if (!this.data.isGameRunning) return;
+      
+      const gameState = {
+        gameLocation: this.data.gameLocation,
+        gameTypeIndex: this.data.gameTypeIndex,
+        gameDuration: this.data.gameDuration,
+        gameAttempts: this.data.gameAttempts,
+        gameStartTime: this.data.gameStartTime,
+        gameEndTime: this.data.gameEndTime,
+        gameRoutes: this.data.gameRoutes,
+        gameScore: this.data.gameScore,
+        gameSuccessCount: this.data.gameSuccessCount,
+        gameFailCount: this.data.gameFailCount,
+        lastTimestamp: Date.now()
+      };
+      
+      wx.setStorageSync('climbingGameState', gameState);
+    },
+    
+    // 检查是否有正在进行的游戏
+    checkForRunningGame() {
+      const gameState = wx.getStorageSync('climbingGameState');
+      
+      if (gameState) {
+        // 有保存的游戏状态
+        const now = Date.now();
+        const endTime = gameState.gameEndTime;
+        
+        if (now < endTime) {
+          // 游戏还在进行中
+          const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+          const timeDisplay = this.formatTime(timeLeft);
+          
+          // 恢复游戏状态
+          this.setData({
+            isGameRunning: true,
+            gameLocation: gameState.gameLocation,
+            gameTypeIndex: gameState.gameTypeIndex,
+            gameDuration: gameState.gameDuration,
+            gameAttempts: gameState.gameAttempts,
+            gameStartTime: gameState.gameStartTime,
+            gameEndTime: gameState.gameEndTime,
+            gameTimeLeft: timeLeft,
+            gameTimeDisplay: timeDisplay,
+            gameRoutes: gameState.gameRoutes || [],
+            gameScore: gameState.gameScore || 0,
+            gameSuccessCount: gameState.gameSuccessCount || 0,
+            gameFailCount: gameState.gameFailCount || 0,
+            activeTab: 'game' // 自动切换到游戏标签
+          });
+          
+          // 重新启动计时器
+          this.startGameTimer();
+        } else {
+          // 游戏已经结束，清理状态
+          this.handleExpiredGame(gameState);
+        }
+      }
+    },
+    
+    // 处理已过期的游戏
+    handleExpiredGame(gameState) {
+      // 如果有路线记录，创建游戏记录
+      if (gameState.gameRoutes && gameState.gameRoutes.length > 0) {
+        // 创建游戏记录
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        // 计算游戏实际持续时间（分钟）
+        const elapsedTimeInSeconds = gameState.gameDuration * 60;
+        const elapsedTimeInMinutes = Math.ceil(elapsedTimeInSeconds / 60);
+        
+        // 计算完成率
+        const totalAttempts = gameState.gameSuccessCount + gameState.gameFailCount;
+        const completionRate = totalAttempts > 0 
+          ? Math.round((gameState.gameSuccessCount / totalAttempts) * 100) 
+          : 0;
+        const formattedCompletionRate = (totalAttempts > 0 
+          ? (gameState.gameSuccessCount / totalAttempts * 100).toFixed(1) 
+          : '0.0') + '%';
+        
+        const gameRecord = {
+          id: Date.now().toString(),
+          location: gameState.gameLocation,
+          date: dateStr,
+          gameDuration: gameState.gameDuration,
+          gameElapsedTime: elapsedTimeInMinutes,
+          actualGameTime: elapsedTimeInMinutes, // 添加实际游戏时长
+          gameType: this.data.gameTypeArray[gameState.gameTypeIndex],
+          gameScore: gameState.gameScore,
+          gameSuccessCount: gameState.gameSuccessCount,
+          gameFailCount: gameState.gameFailCount,
+          gameCompletionRate: completionRate,
+          formattedCompletionRate: formattedCompletionRate,
+          gameRoutes: gameState.gameRoutes,
+          isGame: true
+        };
+        
+        // 保存游戏记录
+        const gameRecords = [...this.data.gameRecords, gameRecord];
+        
+        // 保存到单独的存储
+        wx.setStorageSync('climbingGameRecords', gameRecords);
+        
+        this.setData({
+          gameRecords: gameRecords,
+          filteredGameRecords: gameRecords
+        });
+        
+        wx.showToast({
+          title: '游戏记录已保存',
+          icon: 'success'
+        });
+      }
+      
+      // 清理存储
+      wx.removeStorageSync('climbingGameState');
+    },
+
+    loadGameRecords() {
+      const gameRecords = wx.getStorageSync('climbingGameRecords') || [];
+      
+      // 为每条记录计算格式化的完成率
+      const processedRecords = gameRecords.map(record => {
+        const total = record.gameSuccessCount + record.gameFailCount;
+        const completionRate = total > 0 
+          ? (record.gameSuccessCount / total * 100).toFixed(1) 
+          : '0.0';
+        
+        return {
+          ...record,
+          formattedCompletionRate: completionRate + '%'
+        };
+      });
+      
+      this.setData({
+        gameRecords: processedRecords,
+        filteredGameRecords: processedRecords
+      });
+    },
+
+    bindGameFilterDateChange(e) {
+      const gameFilterDate = e.detail.value;
+      this.setData({
+        gameFilterDate: gameFilterDate
+      });
+      
+      this.filterGameRecords();
+    },
+
+    filterGameRecords() {
+      if (!this.data.gameFilterDate) {
+        this.setData({
+          filteredGameRecords: this.data.gameRecords
+        });
+        return;
+      }
+      
+      const filtered = this.data.gameRecords.filter(record => 
+        record.date === this.data.gameFilterDate
+      );
+      
+      this.setData({
+        filteredGameRecords: filtered
+      });
+    },
+
+    viewGameRecordDetail(e) {
+      const id = e.currentTarget.dataset.id;
+      const record = this.data.gameRecords.find(r => r.id === id);
+      
+      if (record) {
+        this.setData({
+          showGameDetailCard: true,
+          currentGameCard: record
+        });
+      }
+    },
+
+    closeGameDetailCard() {
+      this.setData({
+        showGameDetailCard: false
+      });
+    },
+
+    deleteGameRecord(e) {
+      const id = e.currentTarget.dataset.id;
+      
+      wx.showModal({
+        title: '确认删除',
+        content: '确定要删除这条游戏记录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            const updatedRecords = this.data.gameRecords.filter(r => r.id !== id);
+            
+            // 更新存储
+            wx.setStorageSync('climbingGameRecords', updatedRecords);
+            
+            this.setData({
+              gameRecords: updatedRecords
+            });
+            
+            this.filterGameRecords();
+            
+            wx.showToast({
+              title: '记录已删除',
+              icon: 'success'
+            });
+          }
+        }
+      });
+    },
+
+    // 清除普通记录日期筛选
+    clearDateFilter() {
+      this.setData({
+        filterDate: ''
+      });
+      this.filterRecords();
+    },
+    
+    // 清除游戏记录日期筛选
+    clearGameDateFilter() {
+      this.setData({
+        gameFilterDate: ''
+      });
+      this.filterGameRecords();
     }
   }
 }) 

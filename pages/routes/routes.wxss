@@ -147,6 +147,17 @@
   justify-content: center;
 }
 
+.quantity-control {
+  display: flex;
+  flex-direction: row;
+  gap: 8rpx;
+  justify-content: center;
+}
+
+.quantity-btn {
+  color: #4CAF50;
+}
+
 .delete-icon {
   width: 40rpx;
   height: 40rpx;
@@ -184,17 +195,248 @@
 }
 
 .game-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300rpx;
-  background-color: #f9f9f9;
+  padding: 20rpx;
+  background-color: #fff;
   border-radius: 12rpx;
 }
 
-.coming-soon {
+.game-title {
+  font-size: 36rpx;
+  font-weight: 500;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.game-start-btn {
+  background-color: #22C55E;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  height: 80rpx;
   font-size: 32rpx;
-  color: #999;
+  text-align: center;
+  margin-top: 40rpx;
+  min-width: 95%;
+}
+
+.game-running-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.game-header {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+  padding: 30rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-between;
+}
+
+.game-location {
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.game-type {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.game-timer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10rpx;
+  font-size: 60rpx;
+  font-weight: 500;
+  text-align: center;
+  margin: 10rpx 0;
+}
+
+.game-timer image {
+  width: 76rpx;
+  height: 76rpx;
+}
+
+.game-attempts {
+  font-size: 36rpx;
+  color: #333;
+  text-align: center;
+  margin: 10rpx 0;
+}
+
+.game-attempts-number {
+  color: #22C55E;
+  font-weight: bold;
+}
+
+.game-location-info {
+  font-size: 28rpx;
+  color: #666;
+  text-align: center;
+}
+
+.difficulty-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.difficulty-grid-bouldering, .difficulty-grid-sport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rpx;
+  justify-content: center;
+}
+
+.difficulty-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 15rpx;
+}
+
+.difficulty-btn {
+  width: 120rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e6f0ff; /* 蓝色背景 */
+  color: #3366cc; /* 蓝色文字 */
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.difficulty-btn:active {
+  background-color: #3366cc;
+  color: white;
+}
+
+.difficulty-fail-btn {
+  width: 120rpx;
+  height: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffebee; /* 浅红色背景 */
+  color: #e53935; /* 红色文字 */
+  border-radius: 8rpx;
+}
+
+.difficulty-fail-btn:active {
+  background-color: #e53935;
+  color: white;
+}
+
+.fail-icon {
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.game-routes-list {
+  margin-top: 20rpx;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.game-routes-header {
+  background-color: #f5f5f5;
+  padding: 20rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  text-align: center;
+}
+
+.game-route-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15rpx 20rpx;
+  background-color: #f9f9f9;
+  border-top: 1rpx solid #e0e0e0;
+  border-bottom: 1rpx solid #e0e0e0;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #666;
+}
+
+.game-route-count-header,
+.game-route-time-header,
+.game-route-difficulty-header,
+.game-route-status-header {
+  flex: 1;
+  text-align: center;
+}
+
+.game-route-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx;
+  border-top: 1rpx solid #e0e0e0;
+  align-items: center;
+}
+
+.game-route-count,
+.game-route-time,
+.game-route-difficulty,
+.game-route-status {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+}
+
+.game-route-count {
+  color: #666;
+}
+
+.game-route-time {
+  color: #666;
+}
+
+.game-route-difficulty {
+  font-weight: 500;
+}
+
+.game-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 30rpx;
+}
+
+.game-end-btn {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  height: 80rpx;
+  font-size: 32rpx;
+  text-align: center;
+}
+
+.game-cancel-btn {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  height: 80rpx;
+  font-size: 32rpx;
+  text-align: center;
+}
+
+.coming-soon {
+  display: none;
 }
 
 .history-container {
@@ -226,7 +468,7 @@
 }
 
 .record-card {
-  margin-top: 20rpx;
+  margin-top: 40rpx;
   background-color: rgb(239,246,255, 0.6);
   border-radius: 12rpx;
   padding: 30rpx;
@@ -236,6 +478,7 @@
 .card-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 20rpx;
 }
 
@@ -250,7 +493,7 @@
 }
 
 .card-content {
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .card-item {
@@ -293,31 +536,18 @@
 
 .card-actions {
   display: flex;
-  justify-content: space-between;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
-.view-btn, .delete-btn {
-  flex: 1;
-  height: 72rpx;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  text-align: center;
+.icon-view, .icon-delete {
+  padding-right: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.view-btn {
-  background-color: #f0f9f0;
-  color: #4CAF50;
-  border: 1rpx solid #4CAF50;
-}
-
-.delete-btn {
-  background-color: #ff5252;
-  color: white;
-  border: none;
+.view-btn, .delete-btn {
+  display: none;
 }
 
 .svg-icon {
@@ -334,12 +564,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 82, 82, 0.1);
   transition: background-color 0.3s;
 }
 
-.icon-delete:active {
-  background-color: rgba(255, 82, 82, 0.2);
+.quantity-btn {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 /* 添加地点标题样式 */
@@ -349,4 +579,289 @@
   margin-bottom: 20rpx;
   color: #000;
   padding-bottom: 15rpx;
+}
+
+/* 添加统计信息样式 */
+.game-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  margin-top: 20rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.stat-value.success {
+  color: #22C55E;
+}
+
+.stat-value.fail {
+  color: #e53935;
+}
+
+/* 修改游戏路线列表样式 */
+.game-route-info {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.game-route-status {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  padding: 4rpx 8rpx;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48rpx;
+}
+
+.game-route-status.success {
+  color: #22C55E;
+}
+
+.game-route-status.fail {
+  color: #e53935;
+}
+
+/* 详情卡片样式 */
+.detail-card-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.detail-card {
+  width: 80%;
+  max-width: 600rpx;
+  background-color: white;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.detail-card-header {
+  padding: 30rpx 20rpx;
+  background-color: #f8f8f8;
+  border-bottom: 1rpx solid #eee;
+  position: relative;
+  text-align: center;
+}
+
+.detail-card-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.close-btn {
+  position: absolute;
+  right: 20rpx;
+  top: 20rpx;
+  font-size: 40rpx;
+  color: #999;
+  line-height: 1;
+}
+
+.detail-card-content {
+  padding: 30rpx;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.detail-item {
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.detail-title {
+  font-size: 36rpx;
+  font-weight: 400;
+  margin-bottom: 10rpx;
+}
+
+.detail-label {
+  font-size: 28rpx;
+  color: #666;
+  min-width: 160rpx;
+}
+
+.detail-value {
+  font-size: 28rpx;
+  color: #333;
+  word-break: break-all;
+}
+
+/* 路线记录列表样式 */
+.detail-routes, .detail-game-routes {
+  margin-top: 20rpx;
+}
+
+.detail-routes-list, .detail-game-routes-list {
+  margin-top: 10rpx;
+  border: 1rpx solid #eee;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.detail-route-item {
+  display: flex;
+  padding: 15rpx;
+  border-bottom: 1rpx solid #eee;
+  align-items: center;
+}
+
+.detail-route-item:last-child {
+  border-bottom: none;
+}
+
+.detail-route-type {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.detail-route-difficulty {
+  flex: 1;
+  font-size: 28rpx;
+  text-align: center;
+  font-weight: 500;
+}
+
+.detail-route-quantity {
+  flex: 1;
+  font-size: 28rpx;
+  text-align: right;
+  color: #666;
+}
+
+/* 游戏路线记录列表样式 */
+.detail-game-route-header {
+  display: flex;
+  background-color: #f5f5f5;
+  padding: 15rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.detail-game-route-time-header,
+.detail-game-route-difficulty-header,
+.detail-game-route-status-header {
+  flex: 1;
+  text-align: center;
+}
+
+.detail-game-route-item {
+  display: flex;
+  padding: 15rpx;
+  border-bottom: 1rpx solid #eee;
+  align-items: center;
+}
+
+.detail-game-route-item:last-child {
+  border-bottom: none;
+}
+
+.detail-game-route-time,
+.detail-game-route-difficulty,
+.detail-game-route-status {
+  flex: 1;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.detail-game-route-status.success {
+  color: #22C55E;
+}
+
+.detail-game-route-status.fail {
+  color: #e53935;
+}
+
+/* 添加筛选相关样式 */
+.filter-container {
+  display: flex;
+  align-items: center;
+}
+
+.date-filter {
+  font-size: 28rpx;
+}
+
+.filter-content {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+}
+
+.filter-icon {
+  margin-left: 10rpx;
+  font-size: 28rpx;
+}
+
+.clear-filter {
+  margin-left: 10rpx;
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  color: #999;
+  font-size: 32rpx;
+}
+
+.no-records {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.clear-filter-btn {
+  margin-top: 20rpx;
+  padding: 10rpx 20rpx;
+  background-color: #f0f0f0;
+  color: #666;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+}
+
+.clear-filter-btn:active {
+  background-color: #e0e0e0;
 } 

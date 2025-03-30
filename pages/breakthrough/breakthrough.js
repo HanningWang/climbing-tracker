@@ -21,7 +21,9 @@ Component({
     showCard: false,
     breakthroughList: [],
     currentCard: null,
-    showDetailCard: false
+    showDetailCard: false,
+    filteredBreakthroughList: [],
+    filterDate: ''
   },
 
   /**
@@ -63,12 +65,40 @@ Component({
       });
     },
     
+    bindFilterDateChange(e) {
+      const filterDate = e.detail.value;
+      
+      this.setData({ filterDate });
+      
+      if (filterDate) {
+        // 按日期筛选
+        const filteredBreakthroughList = this.data.breakthroughList.filter(record => 
+          record.date === filterDate
+        );
+        
+        this.setData({ filteredBreakthroughList });
+      } else {
+        // 显示所有记录
+        this.setData({
+          filteredBreakthroughList: this.data.breakthroughList
+        });
+      }
+    },
+    
+    clearDateFilter() {
+      this.setData({
+        filterDate: '',
+        filteredBreakthroughList: this.data.breakthroughList
+      });
+    },
+    
     loadBreakthroughs() {
       const breakthroughs = wx.getStorageSync('breakthroughs') || [];
       console.log('获取到的记录:', JSON.stringify(breakthroughs));
       
       this.setData({
-        breakthroughList: breakthroughs
+        breakthroughList: breakthroughs,
+        filteredBreakthroughList: breakthroughs
       });
       
       // 确保数据已经设置
@@ -108,6 +138,9 @@ Component({
       // 更新突破记录列表
       this.setData({
         breakthroughList: breakthroughs,
+        filteredBreakthroughList: this.data.filterDate ? 
+          breakthroughs.filter(item => item.date === this.data.filterDate) : 
+          breakthroughs,
         // 清空表单
         title: '',
         date: '',
@@ -243,7 +276,10 @@ Component({
             // 更新存储和视图
             wx.setStorageSync('breakthroughs', updatedList);
             this.setData({
-              breakthroughList: updatedList
+              breakthroughList: updatedList,
+              filteredBreakthroughList: this.data.filterDate ? 
+                updatedList.filter(item => item.date === this.data.filterDate) : 
+                updatedList
             });
             
             wx.showToast({
