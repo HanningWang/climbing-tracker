@@ -242,11 +242,11 @@
       
       <view class="card-content">
         <view class="card-item">
-          <text class="card-label">时间:</text>
+          <text class="card-label">日期:</text>
           <text class="card-value">{{item.date}}</text>
         </view>
         <view class="card-item">
-          <text class="card-label">总训练时间:</text>
+          <text class="card-label">训练时间:</text>
           <text class="card-value">{{item.trainingTime}}分钟</text>
         </view>
         <view class="card-item">

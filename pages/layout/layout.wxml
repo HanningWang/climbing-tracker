@@ -2,7 +2,9 @@
 <view class="container">
   <!-- 顶部标题栏 -->
   <view class="header">
-    <view class="title">攀岩突破记</view>
+    <view class="title-section">
+      <text class="title">攀岩突破记</text>
+    </view>
     <view class="profile-button" bindtap="showProfileCard">
       <image src="{{avatarUrl}}" mode="aspectFit"></image>
       <text>{{nickname}}</text>

@@ -33,7 +33,10 @@
         <view class="exercise-input-container">
           <input class="input exercise-input" placeholder="添加训练项目" model:value="{{exerciseInput}}" />
           <view class="add-btn" bindtap="addExercise">
-            <text>+</text>
+            <image src="../../assets/plus-white.svg"></image>
+          </view>
+          <view class="paste-btn" bindtap="showPasteExercises">
+            <image src="../../assets/copy.svg"></image>
           </view>
         </view>
       </view>
@@ -145,29 +148,48 @@
       <!-- 训练记录列表 -->
       <view class="training-records" wx:if="{{trainingRecords.length > 0}}">
         <view class="list-header">
-          <text>训练记录</text>
+          <text class="list-title">训练记录</text>
           
           <!-- 日期选择器 -->
-          <view class="date-picker">
-            <picker mode="date" value="{{filterDate}}" bindchange="changeFilterDate">
-              <view class="date-picker-content">
-                {{filterDate || 'yyyy/mm/dd'}}
-                <text class="calendar-icon">📅</text>
+          <view class="filter-container">
+            <picker mode="date" value="{{filterDate}}" bindchange="changeFilterDate" class="date-filter">
+              <view class="filter-content">
+                <text>筛选: {{filterDate || '全部日期'}}</text>
+                <text class="filter-icon">🔍</text>
               </view>
             </picker>
-            <view class="search-btn" bindtap="searchRecords">
-              <text class="search-icon">🔍</text>
-            </view>
+            <view class="clear-filter" wx:if="{{filterDate}}" bindtap="clearDateFilter">×</view>
           </view>
+        </view>
+        
+        <!-- 无记录提示 -->
+        <view class="no-records" wx:if="{{filteredRecords.length === 0 && filterDate}}">
+          <text>{{filterDate}} 没有训练记录</text>
+          <view class="clear-filter-btn" bindtap="clearDateFilter">清除筛选</view>
         </view>
         
         <view class="record-card" wx:for="{{filteredRecords}}" wx:key="id">
           <view class="card-header">
             <view class="card-title">{{item.planName}}</view>
-            <view class="card-date">{{item.date}}</view>
+            <view class="card-actions">
+              <view class="icon-view" bindtap="viewRecordDetail" data-id="{{item.id}}">
+                <view class="svg-icon">
+                  <image src="../../assets/eye.svg"/>
+                </view>
+              </view>
+              <view class="icon-delete" bindtap="deleteRecord" data-id="{{item.id}}">
+                <view class="svg-icon">
+                  <image src="../../assets/delete.svg"/>
+                </view>
+              </view>
+            </view>
           </view>
           
           <view class="card-content">
+            <view class="card-row">
+              <text class="card-label">日期：</text>
+              <text class="card-value">{{item.date}}</text>
+            </view>
             <view class="card-row">
               <text class="card-label">时长：</text>
               <text class="card-value">{{item.duration}} 分钟</text>
@@ -236,4 +258,72 @@
       </view>
     </view>
   </view>
+
+  <!-- 粘贴训练项目弹窗 -->
+  <view class="modal" wx:if="{{showPasteExercises}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">复制训练项目</text>
+        <view class="close-btn" bindtap="closePasteExercises">×</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="form-item">
+          <textarea class="textarea paste-textarea" placeholder="每行输入一个训练项目..." model:value="{{pasteExercisesContent}}" focus="{{true}}"></textarea>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="modal-btn" bindtap="addPastedExercises">复制并添加</button>
+        <button class="modal-btn cancel-btn" bindtap="closePasteExercises">取消</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 训练记录详情卡片弹窗 -->
+  <view class="detail-card-overlay" wx:if="{{showRecordDetail}}" bindtap="closeRecordDetail">
+    <view class="detail-card" catchtap="stopPropagation">
+      <view class="detail-card-header">
+        <text class="detail-card-title">训练记录详情</text>
+        <view class="close-btn" bindtap="closeRecordDetail">×</view>
+      </view>
+      
+      <view class="detail-card-content">
+        <view class="detail-item">
+          <text class="detail-title">{{currentRecord.planName}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">日期：</text>
+          <text class="detail-value">{{currentRecord.date}}</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">时长：</text>
+          <text class="detail-value">{{currentRecord.duration}} 分钟</text>
+        </view>
+        
+        <view class="detail-item">
+          <text class="detail-label">完成项目：</text>
+          <text class="detail-value">{{currentRecord.completedCount}}/{{currentRecord.totalCount}}</text>
+        </view>
+        
+        <view class="detail-item" wx:if="{{currentRecord.feedback}}">
+          <text class="detail-label">训练反馈：</text>
+          <text class="detail-value">{{currentRecord.feedback}}</text>
+        </view>
+      </view>
+      
+      <!-- 添加卡片底部区域和保存按钮 -->
+      <view class="detail-card-footer">
+        <button class="save-card-btn" bindtap="saveTrainingCardToAlbum">
+          <image src="../../assets/download.svg"></image>
+          <text>保存分享卡片</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 用于生成图片的隐藏canvas -->
+  <canvas type="2d" id="trainingCardCanvas" style="width: 300px; height: 400px; position: fixed; left: -1000px; top: -1000px;"></canvas>
 </view> 

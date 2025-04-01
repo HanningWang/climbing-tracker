@@ -35,7 +35,11 @@ Component({
     trainingFeedback: '',
     trainingRecords: [],
     filteredRecords: [],
-    filterDate: ''
+    filterDate: '',
+    showPasteExercises: false,
+    pasteExercisesContent: '',
+    showRecordDetail: false,
+    currentRecord: null,
   },
 
   lifetimes: {
@@ -233,7 +237,7 @@ Component({
 
     // 保存训练记录
     saveTrainingRecord() {
-      const { selectedPlan, completedExercises, trainingFeedback } = this.data;
+      const { selectedPlan, completedExercises, trainingFeedback, timerSeconds } = this.data;
       
       if (!selectedPlan) {
         wx.showToast({
@@ -247,19 +251,40 @@ Component({
       const completedCount = completedExercises.filter(Boolean).length;
       const totalCount = selectedPlan.exercises.length;
       
+      // 计算实际训练时长（计划时长减去剩余时间）
+      const planDurationInSeconds = parseInt(selectedPlan.duration) * 60;
+      const actualDurationInSeconds = planDurationInSeconds - timerSeconds;
+      const actualDurationInMinutes = Math.ceil(actualDurationInSeconds / 60);
+      
       // 创建新记录
       const newRecord = {
         id: Date.now().toString(),
         planId: selectedPlan.id,
         planName: selectedPlan.name,
         date: new Date().toISOString().split('T')[0], // 格式：YYYY-MM-DD
-        duration: selectedPlan.duration,
+        duration: actualDurationInMinutes, // 使用实际训练时长而不是计划时长
         completedCount,
         totalCount,
         feedback: trainingFeedback.trim(),
         createdAt: new Date().toISOString()
       };
       
+      // 显示确认弹窗
+      wx.showModal({
+        title: '保存训练记录',
+        content: `训练计划: ${newRecord.planName}\n实际时长: ${newRecord.duration}分钟\n完成项目: ${newRecord.completedCount}/${newRecord.totalCount}`,
+        confirmText: '确认保存',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this._saveTrainingRecordConfirmed(newRecord);
+          }
+        }
+      });
+    },
+
+    // 确认后保存训练记录的辅助方法
+    _saveTrainingRecordConfirmed(newRecord) {
       // 获取现有记录并添加新记录
       const trainingRecords = [newRecord, ...this.data.trainingRecords];
       
@@ -298,26 +323,31 @@ Component({
 
     // 更改过滤日期
     changeFilterDate(e) {
-      this.setData({
-        filterDate: e.detail.value
-      });
-    },
-
-    // 搜索记录
-    searchRecords() {
-      const { trainingRecords, filterDate } = this.data;
+      const filterDate = e.detail.value;
       
-      if (!filterDate) {
-        // 如果没有设置过滤日期，显示所有记录
+      this.setData({ filterDate });
+      
+      if (filterDate) {
+        // 按日期过滤记录
+        const filteredRecords = this.data.trainingRecords.filter(record => 
+          record.date === filterDate
+        );
+        
+        this.setData({ filteredRecords });
+      } else {
+        // 显示所有记录
         this.setData({
-          filteredRecords: trainingRecords
+          filteredRecords: this.data.trainingRecords
         });
-        return;
       }
-      
-      // 根据日期过滤记录
-      const filteredRecords = trainingRecords.filter(record => record.date === filterDate);
-      this.setData({ filteredRecords });
+    },
+    
+    // 清除日期筛选
+    clearDateFilter() {
+      this.setData({
+        filterDate: '',
+        filteredRecords: this.data.trainingRecords
+      });
     },
 
     // 保存训练记录到本地存储
@@ -726,6 +756,221 @@ Component({
       
       // 保存当前计时器状态到本地存储
       this.saveTimerStateWithoutStopping();
+    },
+
+    // 显示粘贴训练项目弹窗
+    showPasteExercises() {
+      this.setData({
+        showPasteExercises: true,
+        pasteExercisesContent: ''
+      });
+    },
+    
+    // 关闭粘贴训练项目弹窗
+    closePasteExercises() {
+      this.setData({
+        showPasteExercises: false,
+        pasteExercisesContent: ''
+      });
+    },
+    
+    // 添加粘贴的训练项目
+    addPastedExercises() {
+      const { pasteExercisesContent, exercises } = this.data;
+      
+      if (!pasteExercisesContent.trim()) {
+        wx.showToast({
+          title: '请输入训练项目',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 按行分割文本，并过滤掉空行
+      const newExercises = pasteExercisesContent
+        .split('\n')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      if (newExercises.length === 0) {
+        wx.showToast({
+          title: '未找到有效的训练项目',
+          icon: 'none'
+        });
+        return;
+      }
+      
+      // 合并现有的训练项目和新添加的训练项目
+      this.setData({
+        exercises: [...exercises, ...newExercises],
+        showPasteExercises: false,
+        pasteExercisesContent: ''
+      });
+      
+      wx.showToast({
+        title: `添加成功`,
+        icon: 'success'
+      });
+    },
+
+    // 修改查看训练记录详情的方法
+    viewRecordDetail(e) {
+      const recordId = e.currentTarget.dataset.id;
+      const record = this.data.trainingRecords.find(r => r.id === recordId);
+      
+      if (record) {
+        this.setData({
+          showRecordDetail: true,
+          currentRecord: record
+        });
+      }
+    },
+
+    // 关闭记录详情
+    closeRecordDetail() {
+      this.setData({
+        showRecordDetail: false,
+        currentRecord: null
+      });
+    },
+
+    // 添加保存训练记录分享卡片到相册的方法
+    saveTrainingCardToAlbum() {
+      wx.showLoading({
+        title: '正在保存...',
+      });
+      
+      // 获取卡片节点信息
+      const query = wx.createSelectorQuery().in(this);
+      query.select('#trainingCardCanvas').fields({
+        node: true,
+        size: true,
+      }).exec((res) => {
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        
+        // 设置画布尺寸
+        const dpr = wx.getSystemInfoSync().pixelRatio;
+        canvas.width = res[0].width * dpr;
+        canvas.height = res[0].height * dpr;
+        ctx.scale(dpr, dpr);
+        
+        // 绘制卡片背景
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制卡片内容
+        const record = this.data.currentRecord;
+        
+        // 绘制标题
+        ctx.fillStyle = '#333333';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('训练记录详情', canvas.width / (2 * dpr), 30);
+        
+        // 绘制内容
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${record.planName}`, 20, 70);
+        
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`日期：${record.date}`, 20, 100);
+        ctx.fillText(`时长：${record.duration} 分钟`, 20, 130);
+        ctx.fillText(`完成项目：${record.completedCount}/${record.totalCount}`, 20, 160);
+        
+        if (record.feedback) {
+          // 处理长文本换行
+          const maxWidth = canvas.width / dpr - 40;
+          const words = record.feedback.split('');
+          let line = '反馈：';
+          let y = 190;
+          
+          for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i];
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            
+            if (testWidth > maxWidth && i > 0) {
+              ctx.fillText(line, 20, y);
+              line = words[i];
+              y += 25;
+            } else {
+              line = testLine;
+            }
+          }
+          ctx.fillText(line, 20, y);
+        }
+        
+        // 将画布内容保存为图片
+        wx.canvasToTempFilePath({
+          canvas: canvas,
+          success: (res) => {
+            wx.saveImageToPhotosAlbum({
+              filePath: res.tempFilePath,
+              success: () => {
+                wx.hideLoading();
+                wx.showToast({
+                  title: '保存成功',
+                  icon: 'success'
+                });
+              },
+              fail: (err) => {
+                wx.hideLoading();
+                wx.showToast({
+                  title: '保存失败',
+                  icon: 'none'
+                });
+                console.error('保存失败:', err);
+              }
+            });
+          },
+          fail: (err) => {
+            wx.hideLoading();
+            wx.showToast({
+              title: '生成图片失败',
+              icon: 'none'
+            });
+            console.error('生成图片失败:', err);
+          }
+        });
+      });
+    },
+
+    // 阻止事件冒泡
+    stopPropagation(e) {
+      // 阻止事件冒泡，防止点击卡片内容时关闭卡片
+      return;
+    },
+
+    // 添加删除训练记录的方法
+    deleteRecord(e) {
+      const recordId = e.currentTarget.dataset.id;
+      
+      wx.showModal({
+        title: '确认删除',
+        content: '确定要删除这条训练记录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            // 从列表中移除
+            const updatedRecords = this.data.trainingRecords.filter(r => r.id !== recordId);
+            
+            // 更新存储和视图
+            this.saveTrainingRecords(updatedRecords);
+            this.setData({
+              trainingRecords: updatedRecords,
+              filteredRecords: this.data.filterDate ? 
+                updatedRecords.filter(r => r.date === this.data.filterDate) : 
+                updatedRecords
+            });
+            
+            wx.showToast({
+              title: '删除成功',
+              icon: 'success'
+            });
+          }
+        }
+      });
     }
   }
 }) 

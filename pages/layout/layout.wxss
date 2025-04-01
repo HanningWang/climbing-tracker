@@ -22,8 +22,20 @@
   flex-shrink: 0;
 }
 
+.title-section {
+  display: flex;
+  flex-direction: row;
+}
+
+.title-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
 .title {
   font-size: 56rpx;
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
 }
 
 .profile-button {
