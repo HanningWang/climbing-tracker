@@ -23,7 +23,7 @@ Component({
     routesList: [],
     location: '',
     date: '',
-    trainingTime: '',
+    trainingTime: 0,
     historyRecords: [],
     filteredRecords: [],
     filterDate: '',
@@ -261,7 +261,7 @@ Component({
         id: Date.now().toString(),
         location: this.data.location,
         date: this.data.date,
-        trainingTime: this.data.trainingTime,
+        trainingTime: Number(this.data.trainingTime),
         routes: this.data.routesList,
         isGame: false
       };
@@ -288,7 +288,7 @@ Component({
       this.setData({
         routesList: [],
         location: '',
-        trainingTime: ''
+        trainingTime: 0
       });
     },
 
@@ -892,6 +892,48 @@ Component({
         gameFilterDate: ''
       });
       this.filterGameRecords();
+    },
+
+    undoLastRoute() {
+      // 检查是否有记录可以撤销
+      if (this.data.gameRoutes.length === 0) {
+        wx.showToast({
+          title: '没有可撤销的记录',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 获取最后一条记录
+      const lastRoute = this.data.gameRoutes[this.data.gameRoutes.length - 1];
+      
+      // 显示确认对话框
+      wx.showModal({
+        title: '确认撤销',
+        content: `确定要撤销最后一条${lastRoute.success ? '完成' : '未完成'}的${lastRoute.difficulty}记录吗？`,
+        success: (res) => {
+          if (res.confirm) {
+            // 用户点击确定，执行撤销操作
+            this.setData({
+              // 移除最后一条记录
+              gameRoutes: this.data.gameRoutes.slice(0, -1),
+              // 减去对应的分数
+              gameScore: this.data.gameScore - (lastRoute.score || 0),
+              // 更新成功/失败计数
+              gameSuccessCount: this.data.gameSuccessCount - (lastRoute.success ? 1 : 0),
+              gameFailCount: this.data.gameFailCount - (lastRoute.success ? 0 : 1)
+            });
+
+            // 保存更新后的游戏状态
+            this.saveGameStateWithoutStopping();
+
+            wx.showToast({
+              title: '已撤销最后一条记录',
+              icon: 'success'
+            });
+          }
+        }
+      });
     }
   }
 }) 

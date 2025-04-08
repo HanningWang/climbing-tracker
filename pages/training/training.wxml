@@ -187,19 +187,30 @@
           
           <view class="card-content">
             <view class="card-row">
-              <text class="card-label">日期：</text>
+              <view class="card-label">
+                <image class="label-icon" src="../../assets/calendar.svg"></image>
+                <text>日期：</text>
+              </view>
               <text class="card-value">{{item.date}}</text>
             </view>
             <view class="card-row">
-              <text class="card-label">时长：</text>
+              <view class="card-label">
+                <image class="label-icon" src="../../assets/clock.svg"></image>
+                <text>时长：</text>
+              </view>
               <text class="card-value">{{item.duration}} 分钟</text>
             </view>
             <view class="card-row">
-              <text class="card-label">完成项目：</text>
+              <view class="card-label">
+                <image class="label-icon" src="../../assets/circle-check.svg"></image>
+                <text>完成项目：</text>
+              </view>
               <text class="card-value">{{item.completedCount}}/{{item.totalCount}}</text>
             </view>
             <view class="card-feedback" wx:if="{{item.feedback}}">
-              <text class="card-label">反馈：</text>
+              <view class="card-label">
+                <text>反馈：</text>
+              </view>
               <text class="card-value">{{item.feedback}}</text>
             </view>
           </view>
@@ -294,22 +305,33 @@
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">日期：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>日期：</text>
+          </view>
           <text class="detail-value">{{currentRecord.date}}</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">时长：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/clock.svg"></image>
+            <text>时长：</text>
+          </view>
           <text class="detail-value">{{currentRecord.duration}} 分钟</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">完成项目：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/circle-check.svg"></image>
+            <text>完成项目：</text>
+          </view>
           <text class="detail-value">{{currentRecord.completedCount}}/{{currentRecord.totalCount}}</text>
         </view>
         
         <view class="detail-item" wx:if="{{currentRecord.feedback}}">
-          <text class="detail-label">训练反馈：</text>
+          <view class="detail-label">
+            <text>训练反馈：</text>
+          </view>
           <text class="detail-value">{{currentRecord.feedback}}</text>
         </view>
       </view>

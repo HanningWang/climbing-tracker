@@ -95,11 +95,17 @@
       
       <view class="card-content">
         <view class="card-row">
-          <text class="card-label">日期：</text>
+          <view class="card-label">
+                <image class="label-icon" src="../../assets/calendar.svg"></image>
+                <text>日期：</text>
+              </view>
           <text class="card-value">{{item.date}}</text>
         </view>
         <view class="card-row">
-          <text class="card-label">类型：</text>
+          <view class="card-label">
+                <image class="label-icon" src="../../assets/file-digit.svg"></image>
+                <text>类型：</text>
+              </view>
           <text class="card-type-badge">{{item.type}}</text>
         </view>
       </view>
@@ -126,22 +132,34 @@
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">日期：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>日期：</text>
+          </view>
           <text class="detail-value">{{currentCard.date}}</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">类型：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/file-digit.svg"></image>
+            <text>类型：</text>
+          </view>
           <text class="detail-value">{{currentCard.type}}</text>
         </view>
         
         <view class="detail-item" wx:if="{{currentCard.location}}">
-          <text class="detail-label">地点：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/map-pin.svg"></image>
+            <text>地点：</text>
+          </view>
           <text class="detail-value">{{currentCard.location}}</text>
         </view>
         
         <view class="detail-item" wx:if="{{currentCard.experience}}">
-          <text class="detail-label">心得体会：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/award.svg"></image>
+            <text>心得体会：</text>
+          </view>
           <text class="detail-value">{{currentCard.experience}}</text>
         </view>
       </view>

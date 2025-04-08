@@ -34,7 +34,8 @@ Component({
       maxClimbTime: 100
     },
     showAchievementCard: false,
-    achievementDate: ''
+    achievementDate: '',
+    nickname: '匿名用户',
   },
 
   /**
@@ -55,11 +56,13 @@ Component({
         const breakthroughs = wx.getStorageSync('breakthroughs') || [];
         const climbingRoutes = wx.getStorageSync('climbingRoutes') || [];
         const trainingRecords = wx.getStorageSync('trainingRecords') || [];
+        const climbingGameRecords =wx.getStorageSync('climbingGameRecords') || [];
         
         // 添加日志输出
         console.log('breakthroughs:', breakthroughs);
         console.log('climbingRoutes:', climbingRoutes);
         console.log('trainingRecords:', trainingRecords);
+        console.log('climbingGameRoutes: ', climbingGameRecords);
         
         // 根据时间筛选数据
         const now = new Date();
@@ -71,6 +74,9 @@ Component({
           
         const filteredClimbingRoutes = timeFilter === 'week'
           ? climbingRoutes.filter(item => item && item.date && new Date(item.date) >= oneWeekAgo) : climbingRoutes;
+
+        const filteredGameRoutes =  timeFilter === 'week'
+          ? climbingGameRecords.filter(item => item && item.date && Date(item.date) >= oneWeekAgo) : climbingGameRecords;
           
         const filteredTrainingRecords = timeFilter === 'week'
           ? trainingRecords.filter(item => item && item.date && new Date(item.date) >= oneWeekAgo) : trainingRecords;
@@ -79,7 +85,6 @@ Component({
         // 1. 训练天数 - 所有记录的不重复日期数量
         const trainingDaysSet = new Set();
         const totalTrainings = filteredClimbingRoutes.concat(filteredTrainingRecords);
-        console.log('Total trainings ' + JSON.stringify(totalTrainings))
         
         totalTrainings.forEach(record => {
           if (record && record.date) {
@@ -88,7 +93,6 @@ Component({
           }
         });
         
-        console.log(trainingDaysSet)
         const trainingDays = trainingDaysSet.size;
         
         // 2. 突破次数
@@ -101,7 +105,7 @@ Component({
           const recordBoulderingCount = record.routes
             .filter(route => route && route.type === '抱石')
             .reduce((routeSum, route) => routeSum + route.quantity, 0);
-          return sum + recordBoulderingCount;
+          return sum + Number(recordBoulderingCount);
         }, 0);
         
         // 4. 先锋攀爬次数
@@ -111,22 +115,28 @@ Component({
           const recordLeadCount = record.routes
             .filter(route => route && route.type === '先锋')
             .reduce((routeSum, route) => routeSum + route.quantity, 0);
-          return sum + recordLeadCount;
+          return sum + Number(recordLeadCount);
         }, 0);
         
         // 5. 攀登刷线时间
         const totalClimbingMinutes = filteredClimbingRoutes.reduce((sum, route) => {
-          return sum + route.trainingTime;
+          return sum + Number(route.trainingTime);
         }, 0);
+
+        const totalGameMinutes = filteredGameRoutes.reduce((sum, route) => {
+          return sum + Number(route.gameElapsedTime);
+        }, 0);
+
+        const totalRoutesTime = totalClimbingMinutes + totalGameMinutes;
         
         const climbingTime = {
-          hours: Math.floor(totalClimbingMinutes / 60),
-          minutes: totalClimbingMinutes % 60
+          hours: Math.floor(totalRoutesTime / 60),
+          minutes: totalRoutesTime % 60
         };
         
         // 6. 训练时间
         const totalTrainingMinutes = filteredTrainingRecords.reduce((sum, record) => {
-          return sum + record.duration;
+          return sum + Number(record.duration);
         }, 0);
         
         const trainingTime = {
@@ -212,7 +222,7 @@ Component({
         
         // 计算这一天的攀爬时间
         const climbingMinutes = dayRecords.reduce((sum, record) => {
-          return sum + (record.trainingTime || 0);
+          return sum + (Number(record.trainingTime) || 0);
         }, 0);
         
         records.push({
@@ -625,6 +635,9 @@ Component({
     attached() {
       // 在组件实例进入页面节点树时执行
       this.fetchStatsData(this.data.timeFilter);
+      this.setData({
+        nickname: wx.getStorageSync("nickname")
+      });
     }
   },
   

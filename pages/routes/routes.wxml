@@ -198,6 +198,11 @@
           <text class="game-route-difficulty">{{item.difficulty}}</text>
           <text class="game-route-status {{item.success ? 'success' : 'fail'}}">{{item.success ? '完成' : '未完成'}}</text>
         </view>
+        <!-- 添加撤销按钮 -->
+        <view class="undo-button" bindtap="undoLastRoute">
+          <image class="undo-icon" src="../../assets/undo.svg"></image>
+          <text>撤销最后一条记录</text>
+        </view>
       </view>
       
       <!-- 游戏按钮 - 移到isGameRunning内部 -->
@@ -241,16 +246,25 @@
       </view>
       
       <view class="card-content">
-        <view class="card-item">
-          <text class="card-label">日期:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>日期:</text>
+          </view>
           <text class="card-value">{{item.date}}</text>
         </view>
-        <view class="card-item">
-          <text class="card-label">训练时间:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/clock.svg"></image>
+            <text>训练时间:</text>
+          </view>
           <text class="card-value">{{item.trainingTime}}分钟</text>
         </view>
-        <view class="card-item">
-          <text class="card-label">记录数:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/list.svg"></image>
+            <text>记录数:</text>
+          </view>
           <text class="card-value">{{item.routes.length}}条</text>
         </view>
       </view>
@@ -296,20 +310,32 @@
       </view>
       
       <view class="card-content">
-        <view class="card-item">
-          <text class="card-label">时间:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>时间:</text>
+          </view>
           <text class="card-value">{{item.date}}</text>
         </view>
-        <view class="card-item">
-          <text class="card-label">游戏时长:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/clock.svg"></image>
+            <text>游戏时长:</text>
+          </view>
           <text class="card-value">{{item.actualGameTime || item.gameElapsedTime}}分钟</text>
         </view>
-        <view class="card-item">
-          <text class="card-label">总分:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/number.svg"></image>
+            <text>总分:</text>
+          </view>
           <text class="card-value">{{item.gameScore}}分</text>
         </view>
-        <view class="card-item">
-          <text class="card-label">完成率:</text>
+        <view class="card-row">
+          <view class="card-label">
+            <image class="label-icon" src="../../assets/circle-check.svg"></image>
+            <text>完成率:</text>
+          </view>
           <text class="card-value">{{item.formattedCompletionRate}}</text>
         </view>
       </view>
@@ -336,17 +362,26 @@
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">日期：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>日期：</text>
+          </view>
           <text class="detail-value">{{currentCard.date}}</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">训练时间：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/clock.svg"></image>
+            <text>训练时间：</text>
+          </view>
           <text class="detail-value">{{currentCard.trainingTime}} 分钟</text>
         </view>
         
         <view class="detail-routes">
-          <text class="detail-label">路线记录：</text>
+          <view class="detail-label">
+            <image class="label-icon list-icon" src="../../assets/list.svg"></image>
+            <text>路线记录：</text>
+          </view>
           <view class="detail-routes-list">
             <view class="detail-route-item" wx:for="{{currentCard.routes}}" wx:key="index">
               <text class="detail-route-type">{{item.type}}</text>
@@ -373,32 +408,50 @@
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">日期：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/calendar.svg"></image>
+            <text>日期：</text>
+          </view>
           <text class="detail-value">{{currentGameCard.date}}</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">游戏类型：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/file-digit.svg"></image>
+            <text>游戏类型：</text>
+          </view>
           <text class="detail-value">{{currentGameCard.gameType}}</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">游戏时长：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/clock.svg"></image>
+            <text>游戏时长：</text>
+          </view>
           <text class="detail-value">{{currentGameCard.actualGameTime || currentGameCard.gameElapsedTime}} 分钟</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">总分：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/number.svg"></image>
+            <text>总分：</text>
+          </view>
           <text class="detail-value">{{currentGameCard.gameScore}} 分</text>
         </view>
         
         <view class="detail-item">
-          <text class="detail-label">完成率：</text>
+          <view class="detail-label">
+            <image class="label-icon" src="../../assets/circle-check.svg"></image>
+            <text>完成率：</text>
+          </view>
           <text class="detail-value">{{currentGameCard.formattedCompletionRate}}</text>
         </view>
         
         <view class="detail-game-routes" wx:if="{{currentGameCard.gameRoutes.length > 0}}">
-          <text class="detail-label">尝试记录：</text>
+          <view class="detail-label list-icon">
+            <image class="label-icon" src="../../assets/list.svg"></image>
+            <text>尝试记录：</text>
+          </view>
           <view class="detail-game-routes-list">
             <view class="detail-game-route-header">
               <text class="detail-game-route-difficulty-header">难度</text>

@@ -122,7 +122,7 @@
       
       <view class="card-content">
         <view class="card-header">
-          <text class="card-header-title">你的攀岩成就</text>
+          <text class="card-header-title">{{nickname}}的攀岩成就</text>
           <text class="card-date">{{achievementDate}}</text>
         </view>
         
