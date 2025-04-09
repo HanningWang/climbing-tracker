@@ -76,7 +76,7 @@ Component({
           ? climbingRoutes.filter(item => item && item.date && new Date(item.date) >= oneWeekAgo) : climbingRoutes;
 
         const filteredGameRoutes =  timeFilter === 'week'
-          ? climbingGameRecords.filter(item => item && item.date && Date(item.date) >= oneWeekAgo) : climbingGameRecords;
+          ? climbingGameRecords.filter(item => item && item.date && new Date(item.date) >= oneWeekAgo) : climbingGameRecords;
           
         const filteredTrainingRecords = timeFilter === 'week'
           ? trainingRecords.filter(item => item && item.date && new Date(item.date) >= oneWeekAgo) : trainingRecords;
@@ -108,6 +108,16 @@ Component({
           return sum + Number(recordBoulderingCount);
         }, 0);
         
+        // Add game bouldering count calculation
+        const gameBoulderingCount = filteredGameRoutes.reduce((sum, record) => {
+          if (!record || !record.gameRoutes || record.gameType !== '抱石') return sum;
+          // Count successful routes in gameRoutes
+          const successfulRoutes = record.gameRoutes.filter(route => route.success === true).length;
+          return sum + successfulRoutes;
+        }, 0);
+
+        const totalBoulderingCount = boulderingCount + gameBoulderingCount;
+        
         // 4. 先锋攀爬次数
         const leadClimbingCount = filteredClimbingRoutes.reduce((sum, record) => {
           if (!record || !record.routes) return sum;
@@ -117,6 +127,16 @@ Component({
             .reduce((routeSum, route) => routeSum + route.quantity, 0);
           return sum + Number(recordLeadCount);
         }, 0);
+
+        // Add game lead count calculation
+        const gameLeadCount = filteredGameRoutes.reduce((sum, record) => {
+          if (!record || !record.gameRoutes || record.gameType !== '先锋') return sum;
+          // Count successful routes in gameRoutes
+          const successfulRoutes = record.gameRoutes.filter(route => route.success === true).length;
+          return sum + successfulRoutes;
+        }, 0);
+
+        const totalLeadCount = leadClimbingCount + gameLeadCount;
         
         // 5. 攀登刷线时间
         const totalClimbingMinutes = filteredClimbingRoutes.reduce((sum, route) => {
@@ -149,7 +169,11 @@ Component({
           trainingDays,
           breakthroughCount,
           boulderingCount,
+          gameBoulderingCount,
+          totalBoulderingCount,
           leadClimbingCount,
+          gameLeadCount,
+          totalLeadCount,
           climbingTime,
           trainingTime
         });
@@ -159,8 +183,8 @@ Component({
           statsData: {
             trainingDays,
             breakthroughCount,
-            boulderingCount,
-            leadClimbingCount,
+            boulderingCount: totalBoulderingCount,
+            leadClimbingCount: totalLeadCount,
             climbingTime,
             trainingTime
           }

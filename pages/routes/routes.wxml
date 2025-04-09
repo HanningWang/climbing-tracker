@@ -115,12 +115,12 @@
       
       <view class="form-item">
         <text class="label">游戏时长（分钟）</text>
-        <input class="input" type="number" placeholder="输入游戏时长" model:value="{{gameDuration}}" />
+        <input class="input" type="number" placeholder="输入游戏时长" value="{{gameDuration}}" bindinput="handleGameDurationInput" />
       </view>
       
       <view class="form-item">
         <text class="label">出手次数</text>
-        <input class="input" type="number" placeholder="输入出手次数" model:value="{{gameAttempts}}" />
+        <input class="input" type="number" placeholder="输入出手次数" value="{{gameAttempts}}" bindinput="handleGameAttemptsInput" />
       </view>
       
       <button class="game-start-btn" bindtap="startGame">开始游戏 ({{gameDuration}}分钟)</button>

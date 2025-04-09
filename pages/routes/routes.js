@@ -424,7 +424,9 @@ Component({
         return;
       }
       
-      if (!this.data.gameDuration || this.data.gameDuration <= 0) {
+      // 确保 gameDuration 是数字
+      const duration = parseInt(this.data.gameDuration);
+      if (!duration || duration <= 0) {
         wx.showToast({
           title: '请输入有效游戏时长',
           icon: 'none'
@@ -432,7 +434,9 @@ Component({
         return;
       }
       
-      if (!this.data.gameAttempts || this.data.gameAttempts <= 0) {
+      // 确保 gameAttempts 是数字
+      const attempts = parseInt(this.data.gameAttempts);
+      if (!attempts || attempts <= 0) {
         wx.showToast({
           title: '请输入有效出手次数',
           icon: 'none'
@@ -441,11 +445,13 @@ Component({
       }
       
       // 设置游戏时间（分钟转秒）
-      const gameTimeLeft = parseInt(this.data.gameDuration) * 60;
+      const gameTimeLeft = duration * 60;
       const now = Date.now();
       const gameEndTime = now + (gameTimeLeft * 1000);
       
       this.setData({
+        gameDuration: duration, // 保存为数字
+        gameAttempts: attempts, // 保存为数字
         isGameRunning: true,
         gameTimeLeft: gameTimeLeft,
         gameTimeDisplay: this.formatTime(gameTimeLeft),
@@ -933,6 +939,23 @@ Component({
             });
           }
         }
+      });
+    },
+
+    // 添加输入处理方法
+    handleGameDurationInput(e) {
+      // 将输入值转换为数字
+      const value = parseInt(e.detail.value) || '';
+      this.setData({
+        gameDuration: value
+      });
+    },
+
+    handleGameAttemptsInput(e) {
+      // 将输入值转换为数字
+      const value = parseInt(e.detail.value) || '';
+      this.setData({
+        gameAttempts: value
       });
     }
   }
