@@ -284,6 +284,219 @@ Component({
       
       // 添加日志输出
       console.log('计算后的climbingProgress:', this.data.climbingProgress);
+      
+      // 在下一帧绘制canvas
+      setTimeout(() => {
+        this.drawProgressChart();
+      }, 100);
+    },
+
+    // 添加绘制图表的方法
+    drawProgressChart() {
+      const query = wx.createSelectorQuery().in(this);
+      query.select('#progressChart')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (!res[0] || !res[0].node) {
+            console.error('未找到canvas节点');
+            return;
+          }
+          
+          const canvas = res[0].node;
+          const ctx = canvas.getContext('2d');
+          
+          // 设置canvas尺寸
+          const dpr = wx.getSystemInfoSync().pixelRatio;
+          canvas.width = res[0].width * dpr;
+          canvas.height = res[0].height * dpr;
+          ctx.scale(dpr, dpr);
+          
+          const width = res[0].width;
+          const height = res[0].height;
+          
+          // 清空画布
+          ctx.clearRect(0, 0, width, height);
+          
+          // 绘制网格线
+          this.drawGrid(ctx, width, height);
+          
+          // 绘制数据
+          this.drawData(ctx, width, height);
+          
+          // 绘制坐标轴
+          this.drawAxes(ctx, width, height);
+        });
+    },
+
+    // 绘制网格线
+    drawGrid(ctx, width, height) {
+      const padding = { left: 40, right: 40, top: 20, bottom: 30 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      ctx.strokeStyle = '#eee';
+      ctx.lineWidth = 1;
+      
+      // 水平网格线
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight * i / 4);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+      }
+      
+      // 垂直网格线
+      const records = this.data.climbingProgress.records;
+      if (records && records.length > 0) {
+        for (let i = 0; i < records.length; i++) {
+          const x = padding.left + (chartWidth * i / (records.length - 1));
+          ctx.beginPath();
+          ctx.moveTo(x, padding.top);
+          ctx.lineTo(x, height - padding.bottom);
+          ctx.stroke();
+        }
+      }
+    },
+
+    // 绘制数据线和点
+    drawData(ctx, width, height) {
+      const padding = { left: 40, right: 40, top: 20, bottom: 30 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      const records = this.data.climbingProgress.records;
+      const maxClimbCount = this.data.climbingProgress.maxClimbCount;
+      const maxClimbTime = this.data.climbingProgress.maxClimbTime;
+      
+      if (!records || records.length === 0) return;
+      
+      // 绘制攀爬数量线
+      ctx.strokeStyle = '#8a7cff'; // 紫色
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      for (let i = 0; i < records.length; i++) {
+        const x = padding.left + (chartWidth * i / (records.length - 1));
+        const y = padding.top + chartHeight - (chartHeight * records[i].climbingCount / maxClimbCount);
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      
+      ctx.stroke();
+      
+      // 绘制攀爬数量点（空心点）
+      for (let i = 0; i < records.length; i++) {
+        const x = padding.left + (chartWidth * i / (records.length - 1));
+        const y = padding.top + chartHeight - (chartHeight * records[i].climbingCount / maxClimbCount);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.strokeStyle = '#8a7cff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
+      
+      // 绘制攀爬时间线
+      ctx.strokeStyle = '#4cbb5a'; // 绿色
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      for (let i = 0; i < records.length; i++) {
+        const x = padding.left + (chartWidth * i / (records.length - 1));
+        const y = padding.top + chartHeight - (chartHeight * records[i].climbingMinutes / maxClimbTime);
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      
+      ctx.stroke();
+      
+      // 绘制攀爬时间点（空心点）
+      for (let i = 0; i < records.length; i++) {
+        const x = padding.left + (chartWidth * i / (records.length - 1));
+        const y = padding.top + chartHeight - (chartHeight * records[i].climbingMinutes / maxClimbTime);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.strokeStyle = '#4cbb5a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
+    },
+
+    // 绘制坐标轴和标签
+    drawAxes(ctx, width, height) {
+      const padding = { left: 40, right: 40, top: 20, bottom: 30 };
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      const maxClimbCount = this.data.climbingProgress.maxClimbCount;
+      const maxClimbTime = this.data.climbingProgress.maxClimbTime;
+      
+      // 绘制左侧Y轴标签（攀爬数量）
+      ctx.fillStyle = '#8a7cff';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight * i / 4);
+        const value = Math.round(maxClimbCount * (4 - i) / 4);
+        ctx.fillText(value.toString(), padding.left - 5, y);
+      }
+      
+      // 绘制右侧Y轴标签（攀爬时间）
+      ctx.fillStyle = '#4cbb5a';
+      ctx.textAlign = 'left';
+      
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight * i / 4);
+        const value = Math.round(maxClimbTime * (4 - i) / 4);
+        ctx.fillText(value.toString(), width - padding.right + 5, y);
+      }
+      
+      // 绘制X轴标签（日期）
+      ctx.fillStyle = '#666';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      const records = this.data.climbingProgress.records;
+      if (records && records.length > 0) {
+        // 只显示第一个和最后一个日期
+        const firstDate = records[0].date.split('/').slice(0, 2).join('/');
+        const lastDate = records[records.length - 1].date.split('/').slice(0, 2).join('/');
+        
+        ctx.fillText(firstDate, padding.left, height - padding.bottom + 5);
+        ctx.fillText(lastDate, width - padding.right, height - padding.bottom + 5);
+      }
+      
+      // 绘制图例
+      const legendY = height - 10;
+      
+      // 攀爬数量图例
+      ctx.fillStyle = '#8a7cff';
+      ctx.beginPath();
+      ctx.rect(width / 2 - 70, legendY, 15, 2);
+      ctx.fill();
+      ctx.fillText('攀爬数量', width / 2 - 30, legendY);
+      
+      // 攀爬时间图例
+      ctx.fillStyle = '#4cbb5a';
+      ctx.beginPath();
+      ctx.rect(width / 2 + 20, legendY, 15, 2);
+      ctx.fill();
+      ctx.fillText('攀爬时间', width / 2 + 60, legendY);
     },
 
     calculateTotalClimbCount(records) {
@@ -346,7 +559,7 @@ Component({
           ctx.fillStyle = '#FFFFFF';
           ctx.font = 'bold 18px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('你的攀岩成就', canvas.width / dpr / 2, 90);
+          ctx.fillText(`${this.data.nickname}的攀岩成就`, canvas.width / dpr / 2, 90);
           
           // 绘制日期
           ctx.font = '12px sans-serif';

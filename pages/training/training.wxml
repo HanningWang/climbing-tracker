@@ -280,7 +280,7 @@
       
       <view class="modal-body">
         <view class="form-item">
-          <textarea class="textarea paste-textarea" placeholder="每行输入一个训练项目..." model:value="{{pasteExercisesContent}}" focus="{{true}}"></textarea>
+          <textarea class="textarea paste-textarea" placeholder="每行输入一个训练项目..." model:value="{{pasteExercisesContent}}" focus="{{true}}" maxlength="5000"></textarea>
         </view>
       </view>
       

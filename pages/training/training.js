@@ -840,6 +840,9 @@ Component({
         title: '正在保存...',
       });
       
+      // 获取用户昵称
+      const nickname = wx.getStorageSync('nickname') || {};// 不设置默认值，如果没有昵称则为空字符串
+      
       // 获取卡片节点信息
       const query = wx.createSelectorQuery().in(this);
       query.select('#trainingCardCanvas').fields({
@@ -868,23 +871,51 @@ Component({
         ctx.textAlign = 'center';
         ctx.fillText('训练记录详情', canvas.width / (2 * dpr), 30);
         
-        // 绘制内容
+        // 初始化y坐标
+        let y = 70;
+        const lineHeight = 30; // 行高
+        
+        // 绘制计划名称
         ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText(`${record.planName}`, 20, 70);
+        ctx.fillText(`${record.planName}`, 20, y);
+        y += lineHeight;
         
+        // 绘制日期
         ctx.font = '16px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`日期：${record.date}`, 20, 100);
-        ctx.fillText(`时长：${record.duration} 分钟`, 20, 130);
-        ctx.fillText(`完成项目：${record.completedCount}/${record.totalCount}`, 20, 160);
+        ctx.fillText(`日期：${record.date}`, 20, y);
+        y += lineHeight;
         
+        // 绘制时长
+        ctx.fillText(`时长：${record.duration} 分钟`, 20, y);
+        y += lineHeight;
+        
+        // 绘制完成项目，处理可能的多行情况
+        const completedText = `完成项目：${record.completedCount}/${record.totalCount}`;
+        const maxWidth = canvas.width / dpr - 40;
+        
+        // 检查文本是否需要换行
+        if (ctx.measureText(completedText).width > maxWidth) {
+          // 如果需要换行，分开绘制
+          ctx.fillText(`完成项目：`, 20, y);
+          y += lineHeight;
+          ctx.fillText(`${record.completedCount}/${record.totalCount}`, 20, y);
+          y += lineHeight;
+        } else {
+          // 如果不需要换行，直接绘制
+          ctx.fillText(completedText, 20, y);
+          y += lineHeight;
+        }
+        
+        // 绘制反馈（如果有）
         if (record.feedback) {
+          // 添加一点额外空间
+          y += 10;
+          
           // 处理长文本换行
-          const maxWidth = canvas.width / dpr - 40;
           const words = record.feedback.split('');
           let line = '反馈：';
-          let y = 190;
+          const startY = y;
           
           for (let i = 0; i < words.length; i++) {
             const testLine = line + words[i];
@@ -894,12 +925,26 @@ Component({
             if (testWidth > maxWidth && i > 0) {
               ctx.fillText(line, 20, y);
               line = words[i];
-              y += 25;
+              y += 25; // 反馈文本行间距小一点
             } else {
               line = testLine;
             }
           }
           ctx.fillText(line, 20, y);
+          
+          // 在反馈文本下方添加足够的空间
+          y += 40;
+        } else {
+          // 如果没有反馈，也添加一些空间
+          y += 20;
+        }
+        
+        // 在右下角添加昵称（仅当昵称不为空时）
+        if (nickname && nickname.trim() !== '') {
+          ctx.font = 'italic 14px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#666666';
+          ctx.fillText(`— ${nickname}`, canvas.width / dpr - 20, y);
         }
         
         // 将画布内容保存为图片

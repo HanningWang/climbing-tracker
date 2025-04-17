@@ -101,10 +101,14 @@
 }
 
 .chart-container {
-  display: flex;
   height: 300rpx;
   margin: 20rpx 0;
   position: relative;
+}
+
+.progress-chart {
+  width: 100%;
+  height: 100%;
 }
 
 .y-axis-left, .y-axis-right {

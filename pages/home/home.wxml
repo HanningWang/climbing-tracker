@@ -41,62 +41,7 @@
     <text class="progress-title">攀爬进度</text>
     
     <view class="chart-container">
-      <!-- Y轴标签 - 左侧（攀爬数量） -->
-      <view class="y-axis-left">
-        <text>{{climbingProgress.maxClimbCount}}</text>
-        <text>{{climbingProgress.maxClimbCount * 0.75}}</text>
-        <text>{{climbingProgress.maxClimbCount * 0.5}}</text>
-        <text>{{climbingProgress.maxClimbCount * 0.25}}</text>
-        <text>0</text>
-      </view>
-      
-      <!-- 图表区域 -->
-      <view class="chart-area">
-        <!-- 水平网格线 -->
-        <view class="grid-line" style="top: 0%"></view>
-        <view class="grid-line" style="top: 25%"></view>
-        <view class="grid-line" style="top: 50%"></view>
-        <view class="grid-line" style="top: 75%"></view>
-        <view class="grid-line" style="top: 100%"></view>
-        
-        <!-- 垂直网格线 -->
-        <block wx:for="{{climbingProgress.records}}" wx:key="date" wx:for-index="index">
-          <view class="grid-line vertical" style="left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
-        </block>
-        
-        <!-- 只保留数据点 -->
-        <block wx:for="{{climbingProgress.records}}" wx:key="date" wx:for-index="index">
-          <view class="data-point climb-count-point" style="bottom: {{item.climbingCount / climbingProgress.maxClimbCount * 100}}%; left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
-          <view class="data-point climb-time-point" style="bottom: {{item.climbingMinutes / climbingProgress.maxClimbTime * 100}}%; left: {{index / (climbingProgress.records.length - 1) * 100}}%"></view>
-        </block>
-      </view>
-      
-      <!-- Y轴标签 - 右侧（攀爬时间） -->
-      <view class="y-axis-right">
-        <text>{{climbingProgress.maxClimbTime}}</text>
-        <text>{{climbingProgress.maxClimbTime * 0.75}}</text>
-        <text>{{climbingProgress.maxClimbTime * 0.5}}</text>
-        <text>{{climbingProgress.maxClimbTime * 0.25}}</text>
-        <text>0</text>
-      </view>
-    </view>
-    
-    <!-- X轴标签 -->
-    <view class="x-axis">
-      <text>{{climbingProgress.startDate}}</text>
-      <text>{{climbingProgress.endDate}}</text>
-    </view>
-    
-    <!-- 图例 -->
-    <view class="chart-legend">
-      <view class="legend-item">
-        <view class="legend-color climb-count-color"></view>
-        <text>攀爬数量</text>
-      </view>
-      <view class="legend-item">
-        <view class="legend-color climb-time-color"></view>
-        <text>攀爬时间</text>
-      </view>
+      <canvas type="2d" id="progressChart" class="progress-chart"></canvas>
     </view>
   </view>
 
