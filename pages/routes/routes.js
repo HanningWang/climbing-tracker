@@ -1,10 +1,6 @@
+const common = require('../../utils/common.js');
+
 Component({
-  /**
-   * 组件的属性列表
-   */
-  properties: {
-    
-  },
 
   /**
    * 组件的初始数据
@@ -267,13 +263,14 @@ Component({
       };
       
       const records = [...this.data.historyRecords, newRecord];
+      const sortedRecords = common.sortRecordsByDate(records.filter(record => !record.isGame));
       
       // 保存到本地存储
-      wx.setStorageSync('climbingRoutes', records);
+      wx.setStorageSync('climbingRoutes', sortedRecords);
       
       this.setData({
-        historyRecords: records,
-        filteredRecords: records
+        historyRecords: sortedRecords,
+        filteredRecords: sortedRecords
       });
       
       this.clearForm();
@@ -294,12 +291,10 @@ Component({
 
     loadRecords() {
       const records = wx.getStorageSync('climbingRoutes') || [];
-      // 只加载非游戏记录
-      const normalRecords = records.filter(record => !record.isGame);
       
       this.setData({
-        historyRecords: normalRecords,
-        filteredRecords: normalRecords
+        historyRecords: records,
+        filteredRecords: records
       });
     },
 
@@ -529,8 +524,6 @@ Component({
           }
         }
       }
-
-      console.log(score)
       
       // 创建新的路线记录
       const newRoute = {
@@ -607,14 +600,15 @@ Component({
       };
       
       // 保存游戏记录
-      const gameRecords = [...this.data.gameRecords, gameRecord];
+      const gameRecords = [gameRecord, ...this.data.gameRecords];
+      const sortedGameRecords = common.sortRecordsByDate(gameRecords);
       
       // 保存到单独的存储
-      wx.setStorageSync('climbingGameRecords', gameRecords);
+      wx.setStorageSync('climbingGameRecords', sortedGameRecords);
       
       this.setData({
-        gameRecords: gameRecords,
-        filteredGameRecords: gameRecords,
+        gameRecords: sortedGameRecords,
+        filteredGameRecords: sortedGameRecords,
         isGameRunning: false
       });
       

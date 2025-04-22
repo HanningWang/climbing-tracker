@@ -1,11 +1,6 @@
-Component({
-  /**
-   * 组件的属性列表
-   */
-  properties: {
-    
-  },
+const common = require('../../utils/common.js');
 
+Component({
   /**
    * 组件的初始数据
    */
@@ -18,7 +13,6 @@ Component({
     experience: '',
     showFireworks: false,
     fireworksCount: 20,
-    showCard: false,
     breakthroughList: [],
     currentCard: null,
     showDetailCard: false,
@@ -39,9 +33,6 @@ Component({
     }
   },
 
-  /**
-   * 页面生命周期
-   */
   pageLifetimes: {
     show() {
       // 页面显示时也加载数据
@@ -49,9 +40,6 @@ Component({
     }
   },
 
-  /**
-   * 组件的方法列表
-   */
   methods: {
     bindTypeChange(e) {
       this.setData({
@@ -94,17 +82,11 @@ Component({
     
     loadBreakthroughs() {
       const breakthroughs = wx.getStorageSync('breakthroughs') || [];
-      console.log('获取到的记录:', JSON.stringify(breakthroughs));
       
       this.setData({
         breakthroughList: breakthroughs,
         filteredBreakthroughList: breakthroughs
       });
-      
-      // 确保数据已经设置
-      setTimeout(() => {
-        const currentList = this.data.breakthroughList;
-      }, 100);
     },
     
     submitBreakthrough() {
@@ -133,29 +115,22 @@ Component({
       // 获取已有的突破记录
       const breakthroughs = wx.getStorageSync('breakthroughs') || [];
       breakthroughs.unshift(breakthrough);
-      wx.setStorageSync('breakthroughs', breakthroughs);
+      const sortedBreakthroughs = common.sortRecordsByDate(breakthroughs);
+      wx.setStorageSync('breakthroughs', sortedBreakthroughs);
       
       // 更新突破记录列表
       this.setData({
-        breakthroughList: breakthroughs,
+        breakthroughList: sortedBreakthroughs,
         filteredBreakthroughList: this.data.filterDate ? 
-          breakthroughs.filter(item => item.date === this.data.filterDate) : 
-          breakthroughs,
+        sortedBreakthroughs.filter(item => item.date === this.data.filterDate) : 
+        sortedBreakthroughs,
         // 清空表单
         title: '',
         date: '',
         location: '',
         experience: '',
-        typeIndex: 0,
-        showCard: true
+        typeIndex: 0
       });
-      
-      // 3秒后隐藏卡片
-      setTimeout(() => {
-        this.setData({
-          showCard: false
-        });
-      }, 3000);
     },
     
     // 查看卡片详情
@@ -170,7 +145,6 @@ Component({
         });
       }
     },
-
 
     // 关闭详情卡片
     closeDetailCard() {

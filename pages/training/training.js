@@ -1,10 +1,6 @@
+const common = require('../../utils/common.js');
+
 Component({
-  /**
-   * 组件的属性列表
-   */
-  properties: {
-    
-  },
 
   /**
    * 组件的初始数据
@@ -12,7 +8,7 @@ Component({
   data: {
     activeTab: 'plan', // 默认显示训练计划选项卡
     planName: '',
-    planDuration: '',
+    planDuration: 0,
     exerciseInput: '',
     exercises: [],
     trainingPlans: [],
@@ -287,13 +283,14 @@ Component({
     _saveTrainingRecordConfirmed(newRecord) {
       // 获取现有记录并添加新记录
       const trainingRecords = [newRecord, ...this.data.trainingRecords];
+      const sortedRecords = common.sortRecordsByDate(trainingRecords);
       
       // 保存到本地存储
-      if (this.saveTrainingRecords(trainingRecords)) {
+      if (this.saveTrainingRecords(sortedRecords)) {
         // 更新状态并重置表单
         this.setData({
-          trainingRecords,
-          filteredRecords: trainingRecords,
+          trainingRecords: sortedRecords,
+          filteredRecords: sortedRecords,
           selectedPlanIndex: -1,
           selectedPlan: null,
           completedExercises: [],
@@ -369,11 +366,11 @@ Component({
     loadTrainingRecords() {
       try {
         const trainingRecords = wx.getStorageSync('trainingRecords') || [];
+        
         this.setData({
-          trainingRecords,
+          trainingRecords: trainingRecords,
           filteredRecords: trainingRecords
         });
-        return trainingRecords;
       } catch (e) {
         console.error('加载训练记录失败', e);
         wx.showToast({
@@ -384,7 +381,6 @@ Component({
           trainingRecords: [],
           filteredRecords: []
         });
-        return [];
       }
     },
 
@@ -474,7 +470,7 @@ Component({
         this.setData({
           trainingPlans,
           planName: '',
-          planDuration: '',
+          planDuration: 0,
           exerciseInput: '',
           exercises: []
         });
