@@ -43,22 +43,6 @@
     <button class="submit-btn" bindtap="submitBreakthrough">记录突破</button>
   </view>
 
-  <!-- 烟花动画容器 -->
-  <view class="fireworks-container" wx:if="{{showFireworks}}">
-    <!-- 烟花粒子 -->
-    <view wx:for="{{fireworkElements}}" 
-          wx:key="index" 
-          class="firework"
-          style="left: {{item.left}}vw; top: {{item.top}}vh; width: {{item.size}}px; height: {{item.size}}px; background-color: {{item.color}}; opacity: {{item.opacity}}; animation-duration: {{item.animationDuration}}s; animation-delay: {{item.animationDelay}}s;">
-    </view>
-    
-    <!-- 闪光效果 -->
-    <view wx:for="{{sparkleElements}}" 
-          wx:key="index"
-          class="sparkle"
-          style="left: {{item.left}}vw; top: {{item.top}}vh; width: {{item.size}}px; height: {{item.size}}px; background-color: {{item.color || '#ffffff'}}; animation-duration: {{item.duration || 1}}s; animation-delay: {{item.delay}}s;">
-    </view>
-  </view>
 
   <!-- 突破记录列表 -->
   <view class="breakthrough-list">
@@ -121,58 +105,71 @@
   <!-- 详情卡片弹窗 -->
   <view class="detail-card-overlay" wx:if="{{showDetailCard}}" bindtap="closeDetailCard">
     <view class="detail-card" catchtap="stopPropagation">
+   
+      <!-- 卡片头部 -->
       <view class="detail-card-header">
-        <text class="detail-card-title">突破记录详情</text>
-        <view class="close-btn" bindtap="closeDetailCard">×</view>
+        <view class="mountain-bg">
+          <image src="../../assets/moutains.svg" />
+        </view>
+        <view class="header-content">
+          <text class="header-subtitle">攀岩突破</text>
+          <text class="detail-card-title">{{currentCard.title}}</text>
+        </view>
       </view>
+
+      <!-- 成就徽章 -->
+      <view class="achievement-badge">突破成就</view>
       
       <view class="detail-card-content">
-        <view class="detail-item">
-          <text class="detail-title">{{currentCard.title}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/calendar.svg"></image>
-            <text>日期：</text>
+        <!-- 详情网格 -->
+        <view class="details-grid">
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/calendar.svg"></image>
+              <text>日期</text>
+            </view>
+            <text class="detail-value">{{currentCard.date}}</text>
           </view>
-          <text class="detail-value">{{currentCard.date}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/file-digit.svg"></image>
-            <text>类型：</text>
+          
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/file-digit.svg"></image>
+              <text>类型</text>
+            </view>
+            <text class="detail-value">{{currentCard.type}}</text>
           </view>
-          <text class="detail-value">{{currentCard.type}}</text>
-        </view>
-        
-        <view class="detail-item" wx:if="{{currentCard.location}}">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/map-pin.svg"></image>
-            <text>地点：</text>
+          
+          <view class="detail-item" wx:if="{{currentCard.location}}">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/map-pin.svg"></image>
+              <text>地点</text>
+            </view>
+            <text class="detail-value">{{currentCard.location}}</text>
           </view>
-          <text class="detail-value">{{currentCard.location}}</text>
-        </view>
-        
-        <view class="detail-item" wx:if="{{currentCard.experience}}">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/award.svg"></image>
-            <text>心得体会：</text>
+          
+          <view class="detail-item" wx:if="{{currentCard.experience}}">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/award.svg"></image>
+              <text>心得体会</text>
+            </view>
+            <text class="detail-value">{{currentCard.experience}}</text>
           </view>
-          <text class="detail-value">{{currentCard.experience}}</text>
         </view>
-      </view>
-      
-      <view class="detail-card-footer">
-        <button class="save-card-btn" bindtap="saveCardToAlbum">
+
+        <!-- 保存按钮  -->
+        <button class="save-card-btn" bindtap="callSaveBreakthroughCard">
           <image src="../../assets/download.svg"></image>
           <text>保存分享卡片</text>
         </button>
+      </view>
+
+      <!-- 底部文字 -->
+      <view class="detail-card-footer">
+        <text class="footer-text">继续攀登，突破自我</text>
       </view>
     </view>
   </view>
 
   <!-- 用于生成图片的隐藏canvas -->
-  <canvas type="2d" id="cardCanvas" style="width: 300px; height: 400px; position: fixed; left: -1000px; top: -1000px;"></canvas>
+  <canvas type="2d" id="cardCanvas" style="width: 600px; height: 800px; position: fixed; left: -2000px; top: -2000px;"></canvas>
 </view> 

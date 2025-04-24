@@ -351,45 +351,72 @@
   <!-- 普通记录详情卡片弹窗 -->
   <view class="detail-card-overlay" wx:if="{{showDetailCard}}" bindtap="closeDetailCard">
     <view class="detail-card" catchtap="stopPropagation">
-      <view class="detail-card-header">
-        <text class="detail-card-title">刷线记录详情</text>
-        <view class="close-btn" bindtap="closeDetailCard">×</view>
+      <!-- 卡片头部 -->
+      <view class="detail-card-header routes-header-bg">
+         <view class="mountain-bg">
+          <image src="../../assets/circles.svg" /> 
+        </view> 
+        <view class="header-content">
+          <text class="header-subtitle">刷线记录</text>
+          <text class="detail-card-title">{{currentCard.location}}</text>
+        </view>
       </view>
-      
+
+      <!-- Badge -->
+      <view class="achievement-badge routes-badge"><text>线路完成</text></view>
+
+      <!-- 卡片内容 -->
       <view class="detail-card-content">
-        <view class="detail-item">
-          <text class="detail-title">{{currentCard.location}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/calendar.svg"></image>
-            <text>日期：</text>
+        <!-- 详情网格 -->
+        <view class="details-grid">
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/calendar.svg"></image>
+              <text>日期</text>
+            </view>
+            <text class="detail-value">{{currentCard.date}}</text>
           </view>
-          <text class="detail-value">{{currentCard.date}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/clock.svg"></image>
-            <text>训练时间：</text>
+
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/clock.svg"></image>
+              <text>训练时间</text>
+            </view>
+            <text class="detail-value">{{currentCard.trainingTime}} 分钟</text>
           </view>
-          <text class="detail-value">{{currentCard.trainingTime}} 分钟</text>
-        </view>
-        
-        <view class="detail-routes">
-          <view class="detail-label">
-            <image class="label-icon list-icon" src="../../assets/list.svg"></image>
-            <text>路线记录：</text>
-          </view>
-          <view class="detail-routes-list">
-            <view class="detail-route-item" wx:for="{{currentCard.routes}}" wx:key="index">
-              <text class="detail-route-type">{{item.type}}</text>
-              <text class="detail-route-difficulty">{{item.difficulty}}</text>
-              <text class="detail-route-quantity">x {{item.quantity}}</text>
+
+          <view class="detail-item detail-item-full">
+            <view class="detail-label">
+              <image class="label-icon list-icon" src="../../assets/list.svg"></image>
+              <text>路线记录 ({{currentCard.routes.length}}条)</text>
+            </view>
+            <view class="detail-routes-list">
+              <!-- Header for the list -->
+              <view class="detail-route-header">
+                <text class="detail-route-type-header">类型</text>
+                <text class="detail-route-difficulty-header">难度</text>
+                <text class="detail-route-quantity-header">数量</text>
+              </view>
+              <!-- List items -->
+              <view class="detail-route-item" wx:for="{{currentCard.routes}}" wx:key="index">
+                <text class="detail-route-type">{{item.type}}</text>
+                <text class="detail-route-difficulty">{{item.difficulty}}</text>
+                <text class="detail-route-quantity">x {{item.quantity}}</text>
+              </view>
             </view>
           </view>
         </view>
+        <!-- 暂时隐藏刷线的保存卡片功能
+        <button class="save-card-btn routes-save-btn" bindtap="callSaveRouteCard">
+          <image src="../../assets/download.svg"></image>
+          <text>保存分享卡片</text>
+        </button>
+        -->
+      </view>
+
+      <!-- 底部文字 -->
+      <view class="detail-card-footer routes-footer-bg">
+        <text class="footer-text">不断攀登，超越极限</text>
       </view>
     </view>
   </view>
@@ -397,73 +424,99 @@
   <!-- 游戏记录详情卡片弹窗 -->
   <view class="detail-card-overlay" wx:if="{{showGameDetailCard}}" bindtap="closeGameDetailCard">
     <view class="detail-card" catchtap="stopPropagation">
-      <view class="detail-card-header">
-        <text class="detail-card-title">游戏记录详情</text>
-        <view class="close-btn" bindtap="closeGameDetailCard">×</view>
+      <!-- 卡片头部 -->
+      <view class="detail-card-header game-header-bg">
+         <view class="mountain-bg">
+          <image src="../../assets/circles.svg" /> 
+        </view>
+        <view class="header-content">
+          <text class="header-subtitle">游戏记录</text>
+          <text class="detail-card-title">{{currentGameCard.location}}</text>
+        </view>
       </view>
-      
+
+      <!-- Badge -->
+      <view class="achievement-badge game-badge"><text>线路完成</text></view>
+
+      <!-- 卡片内容 -->
       <view class="detail-card-content">
-        <view class="detail-item">
-          <text class="detail-title">{{currentGameCard.location}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/calendar.svg"></image>
-            <text>日期：</text>
-          </view>
-          <text class="detail-value">{{currentGameCard.date}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/file-digit.svg"></image>
-            <text>游戏类型：</text>
-          </view>
-          <text class="detail-value">{{currentGameCard.gameType}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/clock.svg"></image>
-            <text>游戏时长：</text>
-          </view>
-          <text class="detail-value">{{currentGameCard.actualGameTime || currentGameCard.gameElapsedTime}} 分钟</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/number.svg"></image>
-            <text>总分：</text>
-          </view>
-          <text class="detail-value">{{currentGameCard.gameScore}} 分</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/circle-check.svg"></image>
-            <text>完成率：</text>
-          </view>
-          <text class="detail-value">{{currentGameCard.formattedCompletionRate}}</text>
-        </view>
-        
-        <view class="detail-game-routes" wx:if="{{currentGameCard.gameRoutes.length > 0}}">
-          <view class="detail-label list-icon">
-            <image class="label-icon" src="../../assets/list.svg"></image>
-            <text>尝试记录：</text>
-          </view>
-          <view class="detail-game-routes-list">
-            <view class="detail-game-route-header">
-              <text class="detail-game-route-difficulty-header">难度</text>
-              <text class="detail-game-route-status-header">结果</text>
+        <!-- 详情网格 -->
+        <view class="details-grid">
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/calendar.svg"></image>
+              <text>日期</text>
             </view>
-            <view class="detail-game-route-item" wx:for="{{currentGameCard.gameRoutes}}" wx:key="timestamp">
-              <text class="detail-game-route-difficulty">{{item.difficulty}}</text>
-              <text class="detail-game-route-status {{item.success ? 'success' : 'fail'}}">{{item.success ? '完成' : '未完成'}}</text>
+            <text class="detail-value">{{currentGameCard.date}}</text>
+          </view>
+
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/file-digit.svg"></image>
+              <text>游戏类型</text>
+            </view>
+            <text class="detail-value">{{currentGameCard.gameType}}</text>
+          </view>
+
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/clock.svg"></image>
+              <text>游戏时长</text>
+            </view>
+            <text class="detail-value">{{currentGameCard.actualGameTime || currentGameCard.gameElapsedTime}} 分钟</text>
+          </view>
+
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/number.svg"></image>
+              <text>总分</text>
+            </view>
+            <text class="detail-value">{{currentGameCard.gameScore}} 分</text>
+          </view>
+
+          <view class="detail-item detail-item-full">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/circle-check.svg"></image>
+              <text>完成率 ({{currentGameCard.gameSuccessCount}}/{{currentGameCard.gameSuccessCount + currentGameCard.gameFailCount}})</text>
+            </view>
+            <text class="detail-value">{{currentGameCard.formattedCompletionRate}}</text>
+          </view>
+
+          <view class="detail-item detail-item-full" wx:if="{{currentGameCard.gameRoutes.length > 0}}">
+            <view class="detail-label list-icon">
+              <image class="label-icon" src="../../assets/list.svg"></image>
+              <text>尝试记录 ({{currentGameCard.gameRoutes.length}}条)</text>
+            </view>
+            <view class="detail-game-routes-list">
+              <view class="detail-game-route-header">
+                <text class="detail-game-route-difficulty-header">难度</text>
+                <text class="detail-game-route-status-header">结果</text>
+              </view>
+              <view class="detail-game-route-item" wx:for="{{currentGameCard.gameRoutes}}" wx:key="timestamp">
+                <text class="detail-game-route-difficulty">{{item.difficulty}}</text>
+                <text class="detail-game-route-status {{item.success ? 'success' : 'fail'}}">{{item.success ? '完成' : '未完成'}}</text>
+              </view>
             </view>
           </view>
         </view>
+        <!-- 暂时隐藏刷线的保存卡片功能
+          <button class="save-card-btn game-save-btn" bindtap="callSaveGameCard">
+            <image src="../../assets/download.svg"></image>
+            <text>保存分享卡片</text>
+          </button>
+        -->
+      </view>
+
+      <!-- 底部文字 -->
+      <view class="detail-card-footer game-footer-bg">
+        <text class="footer-text">享受游戏，乐在其中</text>
       </view>
     </view>
   </view>
+
+  <!-- Add hidden canvases for image generation -->
+  <!-- 暂时隐藏刷线的保存卡片功能
+  <canvas type="2d" id="routeCardCanvas" style="width: 600px; height: 800px; position: fixed; left: -2000px; top: -2000px;"></canvas>
+  <canvas type="2d" id="gameCardCanvas" style="width: 600px; height: 800px; position: fixed; left: -2000px; top: -2000px;"></canvas>
+  -->
 </view> 

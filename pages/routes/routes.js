@@ -1,4 +1,5 @@
 const common = require('../../utils/common.js');
+const { sortRecordsByDate, saveCardToAlbum, wrapText } = require('../../utils/common.js');
 
 Component({
 
@@ -951,6 +952,278 @@ Component({
       this.setData({
         gameAttempts: value
       });
-    }
+    },
+
+    // --- Methods to trigger saving ---
+    callSaveRouteCard() {
+        if (!this.data.currentCard || !this.data.currentCard.id) {
+             wx.showToast({ title: '无普通记录数据', icon: 'none' }); return;
+        }
+        const requiredImages = [
+            '/assets/png/calendar.png',
+            '/assets/png/clock.png',
+            '/assets/png/list.png',
+            '/assets/png/routes-header.png' // Optional header bg (e.g., circles.svg)
+        ];
+        saveCardToAlbum(
+            '#routeCardCanvas',
+            this,
+            this.drawRouteCard,
+            this.data.currentCard,
+            requiredImages
+        );
+    },
+
+    callSaveGameCard() {
+        if (!this.data.currentGameCard || !this.data.currentGameCard.id) {
+            wx.showToast({ title: '无游戏记录数据', icon: 'none' }); return;
+        }
+        const requiredImages = [
+            '/assets/png/calendar.png',
+            '/assets/png/file-digit.png', // Type
+            '/assets/png/clock.png',      // Duration
+            '/assets/png/number.png',     // Score
+            '/assets/png/circle-check.png',// Rate
+            '/assets/png/list.png',       // Attempts
+            '/assets/png/game-header.png' // Optional header bg
+        ];
+        saveCardToAlbum(
+            '#gameCardCanvas',
+            this,
+            this.drawGameCard,
+            this.data.currentGameCard,
+            requiredImages
+        );
+    },
+
+    // --- Drawing Function for Normal Route Card (Revised) ---
+    drawRouteCard(ctx, canvas, cardData, width, height, loadedImages) {
+        // --- Constants ---
+        const headerHeight = 160;
+        const footerHeight = 80;
+        const padding = 30;
+        const contentWidth = width - 2 * padding;
+        const headerBgColor = '#0ea5e9'; // Routes blue
+        const bodyBgColor = '#f0f9ff'; // Light blue body
+        const footerBgColor = '#0ea5e9';
+        const headerTextColor = '#ffffff';
+        const footerTextColor = '#ffffff';
+        const primaryTextColor = '#1f2937';
+        const secondaryTextColor = '#6b7280';
+        const badgeBgColor = '#0ea5e9';
+        const badgeTextColor = '#ffffff';
+        const iconSize = 20;
+        const labelIconSpacing = 8;
+        const listHeaderColor = '#374151';
+        const listTextColor = '#4b5563';
+
+        // --- Backgrounds ---
+        ctx.fillStyle = bodyBgColor; ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = headerBgColor; ctx.fillRect(0, 0, width, headerHeight);
+        ctx.fillStyle = footerBgColor; ctx.fillRect(0, height - footerHeight, width, footerHeight);
+
+        // --- Optional Header Image ---
+        const headerImage = loadedImages['/assets/png/routes-header.png'];
+        if (headerImage) { /* Draw similar to training */ }
+
+        // --- Header Text ---
+        ctx.fillStyle = headerTextColor; ctx.textAlign = 'center';
+        ctx.font = '24px sans-serif'; ctx.fillText('刷线记录', width / 2, headerHeight * 0.4);
+        ctx.font = 'bold 40px sans-serif';
+        wrapText(ctx, cardData.location || '刷线地点', width / 2, headerHeight * 0.7, width * 0.8, 45);
+
+        // --- Badge ---
+        const badgeHeight = 44; const badgeWidth = 160; const badgeX = (width - badgeWidth) / 2;
+        const badgeY = headerHeight - badgeHeight / 2; const badgeRadius = badgeHeight / 2;
+        const drawRoundRect = (x, y, w, h, r) => { /* Keep or import */ };
+        ctx.fillStyle = badgeBgColor; drawRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius); ctx.fill();
+        ctx.fillStyle = badgeTextColor; ctx.font = 'bold 24px sans-serif'; ctx.textBaseline = 'middle';
+        ctx.fillText('线路完成', width / 2, badgeY + badgeHeight / 2); ctx.textBaseline = 'alphabetic';
+
+        // --- Details ---
+        let currentY = headerHeight + badgeHeight / 2 + 30;
+        const detailItemSpacing = 35;
+        const listLineHeight = 30;
+        const labelOffsetY = -2;
+
+        const drawDetailItem = (iconPath, labelText, valueText) => { /* Similar to training's helper */
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            const iconY = itemStartY + labelOffsetY - iconSize / 2;
+            const textX = padding + iconSize + labelIconSpacing;
+            const valueMaxWidth = contentWidth - iconSize - labelIconSpacing;
+
+            if (icon) ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            else { ctx.fillStyle = secondaryTextColor; ctx.fillRect(padding, iconY, iconSize, iconSize); }
+
+            ctx.fillStyle = secondaryTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, textX, itemStartY + labelOffsetY);
+            ctx.textBaseline = 'alphabetic';
+
+            ctx.fillStyle = primaryTextColor; ctx.font = 'bold 24px sans-serif';
+            currentY = wrapText(ctx, valueText, textX, itemStartY + detailItemSpacing * 0.6, valueMaxWidth, 28);
+            currentY += detailItemSpacing * 0.4;
+        };
+
+        drawDetailItem('/assets/png/calendar.png', '日期', cardData.date);
+        drawDetailItem('/assets/png/clock.png', '训练时间', `${cardData.trainingTime} 分钟`);
+
+        // Draw Routes List
+        if (cardData.routes && cardData.routes.length > 0) {
+            const iconPath = '/assets/png/list.png';
+            const labelText = `路线记录 (${cardData.routes.length}条)`;
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            const iconY = itemStartY + labelOffsetY - iconSize / 2;
+            const textX = padding + iconSize + labelIconSpacing;
+
+            if (icon) ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            else { ctx.fillStyle = secondaryTextColor; ctx.fillRect(padding, iconY, iconSize, iconSize); }
+
+            ctx.fillStyle = secondaryTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, textX, itemStartY + labelOffsetY);
+            ctx.textBaseline = 'alphabetic';
+            currentY += detailItemSpacing * 0.6; // Move Y down for the list
+
+            // List Header
+            const listStartX = padding + 10; // Indent list slightly
+            const typeX = listStartX;
+            const difficultyX = listStartX + contentWidth * 0.33;
+            const quantityX = listStartX + contentWidth * 0.66;
+            ctx.fillStyle = listHeaderColor;
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('类型', typeX, currentY);
+            ctx.fillText('难度', difficultyX, currentY);
+            ctx.fillText('数量', quantityX, currentY);
+            currentY += listLineHeight * 0.8;
+
+            // List Items
+            ctx.font = '20px sans-serif';
+            ctx.fillStyle = listTextColor;
+            cardData.routes.forEach(route => {
+                wrapText(ctx, route.type, typeX, currentY, contentWidth * 0.3, listLineHeight);
+                wrapText(ctx, route.difficulty, difficultyX, currentY, contentWidth * 0.3, listLineHeight);
+                const lastY = wrapText(ctx, `x ${route.quantity}`, quantityX, currentY, contentWidth * 0.3, listLineHeight);
+                currentY = lastY; // Ensure Y advances correctly after wrapping
+            });
+            currentY += detailItemSpacing * 0.4; // Space after list
+        }
+
+        // --- Footer Text ---
+        ctx.fillStyle = footerTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('不断攀登，超越极限', width / 2, height - footerHeight / 2); ctx.textBaseline = 'alphabetic';
+    },
+
+    // --- Drawing Function for Game Route Card (Revised) ---
+    drawGameCard(ctx, canvas, cardData, width, height, loadedImages) {
+        // --- Constants ---
+        const headerHeight = 160; const footerHeight = 80; const padding = 30; const contentWidth = width - 2 * padding;
+        const headerBgColor = '#facc15'; // Game yellow
+        const bodyBgColor = '#fefce8'; // Light yellow body
+        const footerBgColor = '#facc15';
+        const headerTextColor = '#713f12'; // Dark yellow/brown
+        const footerTextColor = '#713f12';
+        const primaryTextColor = '#1f2937'; const secondaryTextColor = '#6b7280';
+        const badgeBgColor = '#facc15'; const badgeTextColor = '#713f12';
+        const iconSize = 20; const labelIconSpacing = 8;
+        const listHeaderColor = '#374151'; const listTextColor = '#4b5563';
+        const successColor = '#16a34a'; const failColor = '#dc2626';
+
+        // --- Backgrounds & Optional Header Image ---
+        ctx.fillStyle = bodyBgColor; ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = headerBgColor; ctx.fillRect(0, 0, width, headerHeight);
+        ctx.fillStyle = footerBgColor; ctx.fillRect(0, height - footerHeight, width, footerHeight);
+        const headerImage = loadedImages['/assets/png/game-header.png'];
+        if (headerImage) { /* Draw */ }
+
+        // --- Header Text ---
+        ctx.fillStyle = headerTextColor; ctx.textAlign = 'center';
+        ctx.font = '24px sans-serif'; ctx.fillText('游戏记录', width / 2, headerHeight * 0.4);
+        ctx.font = 'bold 40px sans-serif';
+        wrapText(ctx, cardData.location || '游戏地点', width / 2, headerHeight * 0.7, width * 0.8, 45);
+
+        // --- Badge ---
+        const badgeHeight = 44; const badgeWidth = 160; const badgeX = (width - badgeWidth) / 2;
+        const badgeY = headerHeight - badgeHeight / 2; const badgeRadius = badgeHeight / 2;
+        const drawRoundRect = (x, y, w, h, r) => { /* Keep or import */ };
+        ctx.fillStyle = badgeBgColor; drawRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius); ctx.fill();
+        ctx.fillStyle = badgeTextColor; ctx.font = 'bold 24px sans-serif'; ctx.textBaseline = 'middle';
+        ctx.fillText('游戏成就', width / 2, badgeY + badgeHeight / 2); ctx.textBaseline = 'alphabetic';
+
+        // --- Details ---
+        let currentY = headerHeight + badgeHeight / 2 + 30;
+        const detailItemSpacing = 35;
+        const listLineHeight = 30;
+        const labelOffsetY = -2;
+
+        const drawDetailItem = (iconPath, labelText, valueText) => { /* Similar helper */
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            const iconY = itemStartY + labelOffsetY - iconSize / 2;
+            const textX = padding + iconSize + labelIconSpacing;
+            const valueMaxWidth = contentWidth - iconSize - labelIconSpacing;
+
+            if (icon) ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            else { ctx.fillStyle = secondaryTextColor; ctx.fillRect(padding, iconY, iconSize, iconSize); }
+
+            ctx.fillStyle = secondaryTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, textX, itemStartY + labelOffsetY);
+            ctx.textBaseline = 'alphabetic';
+
+            ctx.fillStyle = primaryTextColor; ctx.font = 'bold 24px sans-serif';
+            currentY = wrapText(ctx, valueText, textX, itemStartY + detailItemSpacing * 0.6, valueMaxWidth, 28);
+            currentY += detailItemSpacing * 0.4;
+        };
+
+        drawDetailItem('/assets/png/calendar.png', '日期', cardData.date);
+        drawDetailItem('/assets/png/file-digit.png', '游戏类型', cardData.gameType);
+        drawDetailItem('/assets/png/clock.png', '游戏时长', `${cardData.actualGameTime || cardData.gameElapsedTime} 分钟`);
+        drawDetailItem('/assets/png/number.png', '总分', `${cardData.gameScore} 分`);
+        drawDetailItem('/assets/png/circle-check.png', `完成率 (${cardData.gameSuccessCount}/${cardData.gameSuccessCount + cardData.gameFailCount})`, cardData.formattedCompletionRate);
+
+        // Draw Attempts List
+        if (cardData.gameRoutes && cardData.gameRoutes.length > 0) {
+            const iconPath = '/assets/png/list.png';
+            const labelText = `尝试记录 (${cardData.gameRoutes.length}条)`;
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            const iconY = itemStartY + labelOffsetY - iconSize / 2;
+            const textX = padding + iconSize + labelIconSpacing;
+
+            if (icon) ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            else { ctx.fillStyle = secondaryTextColor; ctx.fillRect(padding, iconY, iconSize, iconSize); }
+
+            ctx.fillStyle = secondaryTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, textX, itemStartY + labelOffsetY);
+            ctx.textBaseline = 'alphabetic';
+            currentY += detailItemSpacing * 0.6;
+
+            // List Header
+            const listStartX = padding + 10;
+            const difficultyX = listStartX;
+            const statusX = listStartX + contentWidth * 0.5; // Adjust column split
+            ctx.fillStyle = listHeaderColor;
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('难度', difficultyX, currentY);
+            ctx.fillText('结果', statusX, currentY);
+            currentY += listLineHeight * 0.8;
+
+            // List Items
+            ctx.font = '20px sans-serif';
+            cardData.gameRoutes.forEach(route => {
+                const statusText = route.success ? '完成' : '未完成';
+                ctx.fillStyle = listTextColor; // Difficulty color
+                wrapText(ctx, route.difficulty, difficultyX, currentY, contentWidth * 0.45, listLineHeight);
+                ctx.fillStyle = route.success ? successColor : failColor; // Status color
+                const lastY = wrapText(ctx, statusText, statusX, currentY, contentWidth * 0.45, listLineHeight);
+                currentY = lastY;
+            });
+             currentY += detailItemSpacing * 0.4; // Space after list
+        }
+
+        // --- Footer Text ---
+        ctx.fillStyle = footerTextColor; ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('享受游戏，乐在其中', width / 2, height - footerHeight / 2); ctx.textBaseline = 'alphabetic';
+    },
   }
 }) 

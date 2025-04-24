@@ -294,58 +294,77 @@
   <!-- 训练记录详情卡片弹窗 -->
   <view class="detail-card-overlay" wx:if="{{showRecordDetail}}" bindtap="closeRecordDetail">
     <view class="detail-card" catchtap="stopPropagation">
+
+      <!-- 卡片头部 -->
       <view class="detail-card-header">
-        <text class="detail-card-title">训练记录详情</text>
-        <view class="close-btn" bindtap="closeRecordDetail">×</view>
+        <view class="mountain-bg">
+          <image src="../../assets/training.svg" />
+        </view>
+        <view class="header-content">
+          <text class="header-subtitle">训练记录</text>
+          <text class="detail-card-title">{{currentRecord.planName}}</text>
+        </view>
       </view>
-      
+
+      <view class="achievement-badge"><text>训练完成</text></view>
       <view class="detail-card-content">
-        <view class="detail-item">
-          <text class="detail-title">{{currentRecord.planName}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/calendar.svg"></image>
-            <text>日期：</text>
+        <!-- 详情网格 -->
+        <view class="details-grid">
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/calendar.svg"></image>
+              <text>日期</text>
+            </view>
+            <text class="detail-value">{{currentRecord.date}}</text>
           </view>
-          <text class="detail-value">{{currentRecord.date}}</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/clock.svg"></image>
-            <text>时长：</text>
+
+          <view class="detail-item">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/clock.svg"></image>
+              <text>时长</text>
+            </view>
+            <text class="detail-value">{{currentRecord.duration}} 分钟</text>
           </view>
-          <text class="detail-value">{{currentRecord.duration}} 分钟</text>
-        </view>
-        
-        <view class="detail-item">
-          <view class="detail-label">
-            <image class="label-icon" src="../../assets/circle-check.svg"></image>
-            <text>完成项目：</text>
+
+          <view class="detail-item detail-item-full">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/circle-check.svg"></image>
+              <text>完成项目 ({{currentRecord.completedCount}}/{{currentRecord.totalCount}})</text>
+            </view>
+            <view class="detail-exercise-list" wx:if="{{currentRecord.exercises && currentRecord.exercises.length > 0}}">
+              <view class="detail-exercise-item {{currentRecord.completionStatus[index] ? 'completed' : ''}}" wx:for="{{currentRecord.exercises}}" wx:key="index">
+                <text class="list-dot">• </text>
+                <text class="exercise-text">{{item}}</text>
+              </view>
+            </view>
+            <view wx:else>
+              <text class="detail-value">{{currentRecord.completedCount}}/{{currentRecord.totalCount}}</text>
+            </view>
           </view>
-          <text class="detail-value">{{currentRecord.completedCount}}/{{currentRecord.totalCount}}</text>
-        </view>
-        
-        <view class="detail-item" wx:if="{{currentRecord.feedback}}">
-          <view class="detail-label">
-            <text>训练反馈：</text>
+
+          <view class="detail-item detail-item-full" wx:if="{{currentRecord.feedback}}">
+            <view class="detail-label">
+              <image class="label-icon" src="../../assets/message-square.svg"></image>
+              <text>训练反馈</text>
+            </view>
+            <text class="detail-value">{{currentRecord.feedback}}</text>
           </view>
-          <text class="detail-value">{{currentRecord.feedback}}</text>
         </view>
-      </view>
-      
-      <!-- 添加卡片底部区域和保存按钮 -->
-      <view class="detail-card-footer">
-        <button class="save-card-btn" bindtap="saveTrainingCardToAlbum">
+
+        <!-- 保存按钮 -->
+        <button class="save-card-btn" bindtap="callSaveTrainingCard">
           <image src="../../assets/download.svg"></image>
           <text>保存分享卡片</text>
         </button>
+      </view>
+
+      <!-- 底部文字 -->
+      <view class="detail-card-footer">
+        <text class="footer-text">坚持训练，保持健康</text>
       </view>
     </view>
   </view>
 
   <!-- 用于生成图片的隐藏canvas -->
-  <canvas type="2d" id="trainingCardCanvas" style="width: 300px; height: 400px; position: fixed; left: -1000px; top: -1000px;"></canvas>
+  <canvas type="2d" id="trainingCardCanvas" style="width: 600px; height: 800px; position: fixed; left: -2000px; top: -2000px;"></canvas>
 </view> 

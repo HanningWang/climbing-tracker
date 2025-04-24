@@ -1,11 +1,5 @@
 // pages/home/home.js
 Component({
-  /**
-   * 组件的属性列表
-   */
-  properties: {
-    
-  },
 
   /**
    * 组件的初始数据
@@ -57,12 +51,6 @@ Component({
         const climbingRoutes = wx.getStorageSync('climbingRoutes') || [];
         const trainingRecords = wx.getStorageSync('trainingRecords') || [];
         const climbingGameRecords =wx.getStorageSync('climbingGameRecords') || [];
-        
-        // 添加日志输出
-        console.log('breakthroughs:', breakthroughs);
-        console.log('climbingRoutes:', climbingRoutes);
-        console.log('trainingRecords:', trainingRecords);
-        console.log('climbingGameRoutes: ', climbingGameRecords);
         
         // 根据时间筛选数据
         const now = new Date();
@@ -163,20 +151,6 @@ Component({
           hours: Math.floor(totalTrainingMinutes / 60),
           minutes: totalTrainingMinutes % 60
         };
-        
-        // 输出计算结果
-        console.log('计算结果:', {
-          trainingDays,
-          breakthroughCount,
-          boulderingCount,
-          gameBoulderingCount,
-          totalBoulderingCount,
-          leadClimbingCount,
-          gameLeadCount,
-          totalLeadCount,
-          climbingTime,
-          trainingTime
-        });
         
         // 更新数据
         this.setData({
@@ -281,9 +255,6 @@ Component({
           maxClimbTime
         }
       });
-      
-      // 添加日志输出
-      console.log('计算后的climbingProgress:', this.data.climbingProgress);
       
       // 在下一帧绘制canvas
       setTimeout(() => {
@@ -559,7 +530,7 @@ Component({
           ctx.fillStyle = '#FFFFFF';
           ctx.font = 'bold 18px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(`${this.data.nickname}的攀岩成就`, canvas.width / dpr / 2, 90);
+          ctx.fillText(`${this.data.nickname === '匿名用户' ? '你' : this.data.nickname}的攀岩成就`, canvas.width / dpr / 2, 90);
           
           // 绘制日期
           ctx.font = '12px sans-serif';

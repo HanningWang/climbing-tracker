@@ -1,4 +1,4 @@
-const common = require('../../utils/common.js');
+const { sortRecordsByDate, saveCardToAlbum, wrapText } = require('../../utils/common.js');
 
 Component({
   /**
@@ -11,8 +11,6 @@ Component({
     date: '',
     location: '',
     experience: '',
-    showFireworks: false,
-    fireworksCount: 20,
     breakthroughList: [],
     currentCard: null,
     showDetailCard: false,
@@ -99,9 +97,6 @@ Component({
         return;
       }
       
-      // 显示烟花动画
-      this.showFireworksAnimation();
-      
       // 保存数据到本地存储
       const breakthrough = {
         id: Date.now().toString(), // 使用时间戳作为唯一ID
@@ -115,7 +110,7 @@ Component({
       // 获取已有的突破记录
       const breakthroughs = wx.getStorageSync('breakthroughs') || [];
       breakthroughs.unshift(breakthrough);
-      const sortedBreakthroughs = common.sortRecordsByDate(breakthroughs);
+      const sortedBreakthroughs = sortRecordsByDate(breakthroughs);
       wx.setStorageSync('breakthroughs', sortedBreakthroughs);
       
       // 更新突破记录列表
@@ -152,87 +147,209 @@ Component({
         showDetailCard: false
       });
     },
-    
-    // 保存分享卡片到相册
-    saveCardToAlbum() {
-      wx.showLoading({
-        title: '正在保存...',
-      });
-      
-      // 获取卡片节点信息
-      const query = wx.createSelectorQuery().in(this);
-      query.select('#cardCanvas').fields({
-        node: true,
-        size: true,
-      }).exec((res) => {
-        const canvas = res[0].node;
-        const ctx = canvas.getContext('2d');
-        
-        // 设置画布尺寸
-        const dpr = wx.getSystemInfoSync().pixelRatio;
-        canvas.width = res[0].width * dpr;
-        canvas.height = res[0].height * dpr;
-        ctx.scale(dpr, dpr);
-        
-        // 绘制卡片背景
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 绘制卡片内容
-        const card = this.data.currentCard;
-        
-        // 绘制标题
-        ctx.fillStyle = '#333333';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('突破记录详情', canvas.width / (2 * dpr), 30);
-        
-        // 绘制内容
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${card.title}`, 20, 70);
-        ctx.font = '16px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`日期：${card.date}`, 20, 100);
-        ctx.fillText(`类型：${card.type}`, 20, 130);
-        
-        if (card.location) {
-          ctx.fillText(`地点：${card.location}`, 20, 160);
+
+    // Method called by the save button in WXML
+    callSaveBreakthroughCard() {
+        if (!this.data.currentCard) {
+            wx.showToast({ title: '无卡片数据', icon: 'none' });
+            return;
         }
-        
-        // 将画布内容保存为图片
-        wx.canvasToTempFilePath({
-          canvas: canvas,
-          success: (res) => {
-            wx.saveImageToPhotosAlbum({
-              filePath: res.tempFilePath,
-              success: () => {
-                wx.hideLoading();
-                wx.showToast({
-                  title: '保存成功',
-                  icon: 'success'
-                });
-              },
-              fail: (err) => {
-                wx.hideLoading();
-                wx.showToast({
-                  title: '保存失败',
-                  icon: 'none'
-                });
-                console.error('保存失败:', err);
-              }
-            });
-          },
-          fail: (err) => {
-            wx.hideLoading();
-            wx.showToast({
-              title: '生成图片失败',
-              icon: 'none'
-            });
-            console.error('生成图片失败:', err);
-          }
-        });
-      });
+        const requiredImages = [
+            '/assets/png/calendar.png',
+            '/assets/png/file-digit.png', // Use the correct icon name
+            '/assets/png/map-pin.png',
+            '/assets/png/award.png',
+            '/assets/png/mountains-header.png' // Optional header bg
+        ];
+        saveCardToAlbum(
+            '#cardCanvas',
+            this,
+            this.drawBreakthroughCard,
+            this.data.currentCard,
+            requiredImages
+        );
+    },
+
+    // --- Drawing Function for Breakthrough Card (Revised for Style Matching) ---
+    drawBreakthroughCard(ctx, canvas, cardData, width, height, loadedImages) {
+        // --- Constants ---
+        const headerHeight = 240;
+        const footerHeight = 80;
+        const padding = 30;
+        const contentWidth = width - 2 * padding;
+        const headerGradStart = '#0369a1';
+        const headerGradEnd = '#0c4a6e';
+        const bodyBgColor = '#ffffff';
+        const footerBgColor = '#0c4a6e';
+        const headerTextColor = '#ffffff';
+        const headerSubTextColor = '#bae6fd';
+        const footerTextColor = '#bae6fd';
+        const primaryTextColor = '#1e293b';
+        const secondaryTextColor = '#64748b';
+        const badgeBgColor = '#f59e0b'; // Amber
+        const badgeTextColor = '#78350f'; // Dark Amber text
+        const iconSize = 20;
+        const labelIconSpacing = 8;
+        const valueLabelSpacing = 10; // Space between label and value
+        const detailItemSpacing = 35; // Vertical space between items
+        const experienceLineHeight = 30; // Line height for experience text
+
+        // Font Styles
+        const headerTitleFont = 'bold 48px sans-serif';
+        const headerSubtitleFont = '24px sans-serif';
+        const detailLabelFont = '22px sans-serif';
+        const detailValueFont = 'bold 24px sans-serif'; // Bold value
+        const experienceFont = '24px sans-serif'; // Normal weight for experience
+        const footerFont = '22px sans-serif';
+        const badgeFontSize = 'bold 28px sans-serif';
+
+        // --- Backgrounds ---
+        ctx.fillStyle = bodyBgColor;
+        ctx.fillRect(0, 0, width, height);
+        const gradient = ctx.createLinearGradient(0, 0, 0, headerHeight);
+        gradient.addColorStop(0, headerGradStart);
+        gradient.addColorStop(1, headerGradEnd);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, headerHeight);
+        ctx.fillStyle = footerBgColor;
+        ctx.fillRect(0, height - footerHeight, width, footerHeight);
+
+        // --- Optional Header Background Image ---
+        const headerImage = loadedImages['/assets/png/mountains-header.png'];
+        if (headerImage) {
+            ctx.globalAlpha = 0.2;
+            ctx.drawImage(headerImage, 0, headerHeight * 0.1, width, headerHeight * 0.9);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // --- Header Text ---
+        ctx.fillStyle = headerSubTextColor;
+        ctx.textAlign = 'center';
+        ctx.font = headerSubtitleFont;
+        ctx.fillText('攀岩突破', width / 2, headerHeight * 0.35);
+        ctx.fillStyle = headerTextColor;
+        ctx.font = headerTitleFont;
+        wrapText(ctx, cardData.title || '突破标题', width / 2, headerHeight * 0.65, width * 0.85, 55);
+
+        // --- Achievement Badge ---
+        const badgeHeight = 50;
+        const badgeWidth = 200;
+        const badgeX = (width - badgeWidth) / 2;
+        const badgeY = headerHeight - badgeHeight / 2;
+        const badgeRadius = badgeHeight / 2;
+        // *** Define drawRoundRect helper ***
+        const drawRoundRect = (x, y, w, h, r) => {
+            if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+            ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        };
+        ctx.fillStyle = badgeBgColor;
+        drawRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius);
+        ctx.fill();
+        ctx.fillStyle = badgeTextColor;
+        ctx.font = badgeFontSize;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('突破成就', width / 2, badgeY + badgeHeight / 2);
+        ctx.textBaseline = 'alphabetic';
+
+        // --- Details Area ---
+        let currentY = headerHeight + badgeHeight / 2 + 40; // Start below badge
+
+        // *** Revised Helper to draw detail item horizontally ***
+        const drawDetailItemHorizontal = (iconPath, labelText, valueText) => {
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            // Calculate Y position to center icon and text vertically on the line
+            const verticalCenterY = itemStartY + detailItemSpacing / 2;
+            const iconY = verticalCenterY - iconSize / 2;
+
+            // Draw Icon
+            if (icon) {
+                ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            } else {
+                ctx.fillStyle = secondaryTextColor; // Fallback shape
+                ctx.fillRect(padding, iconY, iconSize, iconSize);
+            }
+
+            // Prepare text drawing
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle'; // Align text vertically to the center line
+
+            // Draw Label
+            ctx.fillStyle = secondaryTextColor;
+            ctx.font = detailLabelFont;
+            const labelX = padding + iconSize + labelIconSpacing;
+            const labelContent = labelText + ':'; // Add colon
+            ctx.fillText(labelContent, labelX, verticalCenterY);
+
+            // Draw Value
+            ctx.fillStyle = primaryTextColor;
+            ctx.font = detailValueFont; // Use bold font for value
+            const labelWidth = ctx.measureText(labelContent).width;
+            const valueX = labelX + labelWidth + valueLabelSpacing; // Position value after label + spacing
+            const valueMaxWidth = width - padding - valueX; // Max width available for value
+            ctx.fillText(valueText, valueX, verticalCenterY, valueMaxWidth); // Draw value, allow truncation if needed
+
+            // Advance Y for the next item
+            currentY += detailItemSpacing;
+            ctx.textBaseline = 'alphabetic'; // Reset baseline
+        };
+
+        // Draw Details Horizontally
+        drawDetailItemHorizontal('/assets/png/calendar.png', '日期', cardData.date);
+        drawDetailItemHorizontal('/assets/png/file-digit.png', '类型', cardData.type);
+        if (cardData.location && cardData.location.trim() !== '') {
+            drawDetailItemHorizontal('/assets/png/map-pin.png', '地点', cardData.location);
+        }
+
+        // --- Draw Experience ---
+        if (cardData.experience && cardData.experience.trim() !== '') {
+            const experienceIconPath = '/assets/png/award.png';
+            const experienceLabel = '心得体会';
+
+            // Draw only the icon and label part first
+            const drawLabelAndIconOnly = (iconPath, labelText) => {
+                const icon = loadedImages[iconPath];
+                const itemStartY = currentY;
+                const verticalCenterY = itemStartY + detailItemSpacing / 2;
+                const iconY = verticalCenterY - iconSize / 2;
+
+                if (icon) ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+                else { ctx.fillStyle = secondaryTextColor; ctx.fillRect(padding, iconY, iconSize, iconSize); }
+
+                ctx.fillStyle = secondaryTextColor; ctx.font = detailLabelFont; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                const labelX = padding + iconSize + labelIconSpacing;
+                ctx.fillText(labelText + ':', labelX, verticalCenterY);
+                ctx.textBaseline = 'alphabetic'; // Reset
+
+                // *** Increase vertical space after the label line ***
+                // Advance Y to start text below the label line with more clearance
+                currentY += detailItemSpacing * 2; // Use full item spacing to move down
+            };
+
+            // Draw experience icon and label (uses the updated drawLabelAndIconOnly)
+            drawLabelAndIconOnly(experienceIconPath, experienceLabel);
+
+            // Draw experience value below the label using wrapText
+            ctx.fillStyle = primaryTextColor;
+            ctx.font = experienceFont; // Normal weight font
+            const experienceStartX = padding + iconSize + labelIconSpacing; // Indent text
+            const experienceMaxWidth = contentWidth - (iconSize + labelIconSpacing);
+            // Use wrapText starting from the adjusted currentY
+            currentY = wrapText(ctx, cardData.experience, experienceStartX, currentY, experienceMaxWidth, experienceLineHeight);
+            // Adjust space *after* the experience text if needed
+            currentY += detailItemSpacing * 0.3; // Reduced space after experience
+        }
+
+        // --- Footer Text ---
+        ctx.fillStyle = footerTextColor;
+        ctx.font = footerFont;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('继续攀登，突破自我', width / 2, height - footerHeight / 2);
+        ctx.textBaseline = 'alphabetic';
     },
     
     // 删除卡片
@@ -263,84 +380,6 @@ Component({
           }
         }
       });
-    },
-    
-    showFireworksAnimation() {
-      // 创建更真实的烟花效果
-      const fireworkElements = [];
-      const sparkleElements = [];
-      const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff9900', '#ff5500', '#ff00ff', 
-                     '#ffcc00', '#88ff00', '#00ffaa', '#ff88cc'];
-      
-      // 发射点数量
-      const launchPoints = 8;
-      
-      // 为每个发射点创建烟花
-      for (let i = 0; i < launchPoints; i++) {
-        const baseLeft = 10 + (i * 80 / launchPoints); // 均匀分布发射点
-        const baseColor = colors[Math.floor(Math.random() * colors.length)];
-        
-        // 每个发射点发射多个粒子
-        const particleCount = Math.floor(Math.random() * 10) + 15; // 15-25个粒子
-        
-        for (let j = 0; j < particleCount; j++) {
-          // 随机角度，形成圆形爆炸效果
-          const angle = Math.random() * Math.PI * 2;
-          const distance = Math.random() * 15 + 5; // 爆炸半径
-          
-          // 计算粒子最终位置
-          const left = baseLeft + Math.cos(angle) * distance;
-          const top = 40 + Math.sin(angle) * distance;
-          
-          // 随机大小和动画时间 - 缩短动画时间
-          const size = Math.random() * 4 + 2; // 2-6px
-          const animationDuration = Math.random() * 0.5 + 0.5; // 0.5-1秒，缩短了动画时间
-          const animationDelay = Math.random() * 0.2; // 0-0.2秒延迟，减少了延迟时间
-          
-          fireworkElements.push({
-            color: baseColor,
-            left,
-            top,
-            size,
-            animationDuration,
-            animationDelay,
-            opacity: Math.random() * 0.3 + 0.7, // 0.7-1的透明度
-            type: 0 // 使用圆形
-          });
-        }
-        
-      }
-      
-      // 添加额外的闪光点 - 减少数量和持续时间
-      for (let i = 0; i < 15; i++) { // 减少闪光点数量
-        sparkleElements.push({
-          left: Math.random() * 100,
-          top: Math.random() * 70 + 10,
-          size: Math.random() * 3 + 1,
-          delay: Math.random() * 0.8, // 减少延迟
-          duration: Math.random() * 0.6 + 0.3, // 缩短持续时间
-          color: colors[Math.floor(Math.random() * colors.length)]
-        });
-      }
-      
-      this.setData({
-        fireworkElements,
-        sparkleElements,
-        showFireworks: true
-      });
-      
-      // 2.5秒后隐藏烟花
-      setTimeout(() => {
-        this.setData({
-          showFireworks: false
-        });
-      }, 2000); // 从5000ms改为2500ms
-    },
-    
-    // 阻止事件冒泡
-    stopPropagation(e) {
-      // 阻止事件冒泡，防止点击卡片内容时关闭卡片
-      return;
     },
   }
 }) 

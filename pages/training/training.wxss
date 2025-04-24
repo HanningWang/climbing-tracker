@@ -215,23 +215,17 @@
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
 .card-title {
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 500;
 }
 
 .card-content {
+  margin-top: 10rpx;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 20rpx;
+  gap: 6rpx;
+  padding: 0 12rpx;
 }
 
 .card-row {
@@ -242,7 +236,6 @@
 .card-label {
   font-size: 28rpx;
   color: #666;
-  margin-right: 10rpx;
   min-width: 140rpx;
 }
 
@@ -257,6 +250,7 @@
   padding: 15rpx 0;
   border-radius: 8rpx;
   font-size: 28rpx;
+  width: 80%;
 }
 
 .view-btn {
@@ -644,94 +638,207 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 32rpx 0;
 }
 
 .detail-card {
-  width: 85%;
-  max-width: 600rpx;
-  background-color: #fff;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  width: 80%;
+  max-width: 660rpx;
+  background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+  border-radius: 24rpx;
+  box-shadow: 0 25rpx 50rpx -12rpx rgba(0, 0, 0, 0.25);
   overflow: hidden;
+  position: relative;
   display: flex;
   flex-direction: column;
   max-height: 80vh;
+  top: 50rpx;
 }
 
 .detail-card-header {
-  padding: 30rpx 20rpx;
-  background-color: #f8f8f8;
-  border-bottom: 1rpx solid #eee;
+  height: 280rpx;
+  background: linear-gradient(to bottom, #10b981, #059669, #047857);
+  padding: 40rpx;
   position: relative;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: none;
+}
+
+.mountain-bg {
+  position: absolute;
+  inset: 0;
+  top: 40rpx;
+  left: 40rpx;
+  opacity: 0.3;
+}
+.mountain-bg image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.header-subtitle {
+  font-size: 24rpx;
+  color: #a7f3d0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  margin-bottom: 8rpx;
 }
 
 .detail-card-title {
-  padding-left: 20rpx;
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: 48rpx;
+  color: white;
+  font-weight: bold;
+  word-break: break-word;
+  padding: 0 10rpx;
+}
+
+.achievement-badge {
+  background: #10b981;
+  width: 60%;
+  display: flex;
+  color: #047857;
+  height: 66rpx;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+  font-weight: bold;
+  padding: 16rpx 64rpx;
+  border-radius: 999rpx;
+  font-size: 32rpx;
+  margin-top: -48rpx;
+  margin-bottom: 32rpx;
+  border: 4rpx solid white;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.achievement-badge text {
+  color: white;
 }
 
 .detail-card-content {
-  padding: 24rpx;
+  padding: 48rpx;
+  padding-top: 32rpx;
   overflow-y: auto;
+  flex: 1;
+}
+
+.details-grid {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
 }
 
 .detail-item {
-  padding-left: 16rpx;
+  margin-bottom: 0;
+  padding-left: 0;
   display: flex;
-  flex-direction: row;
-  margin-bottom: 20rpx;
+  flex-direction: column;
 }
 
-.detail-title {
-  font-size: 40rpx;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 16rpx;
-  display: block;
+.detail-item-full {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-bottom: 4rpx;
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+}
+
+.label-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 12rpx;
+  opacity: 0.8;
 }
 
 .detail-value {
   font-size: 28rpx;
-  color: #333;
-  word-break: break-all;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
 }
 
-.close-btn {
-  position: absolute;
-  right: 20rpx;
-  top: 20rpx;
-  font-size: 40rpx;
-  line-height: 1;
-  color: #999;
-  cursor: pointer;
-  width: 60rpx;
-  height: 60rpx;
+.detail-card-footer {
+  background: #047857;
+  padding: 24rpx;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-text {
+  font-size: 24rpx;
+  color: #a7f3d0;
+}
+
+.save-card-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  width: 100%;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+.save-card-btn:active {
+  background: #059669;
+}
+
+.save-card-btn image {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 16rpx;
 }
 
 .record-card {
   margin-bottom: 20rpx;
   background-color: rgba(239, 246, 255, 0.6);
   border-radius: 12rpx;
-  padding: 20rpx;
+  padding: 0;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
 .card-header {
-  padding: 20rpx;
+  padding: 10rpx 20rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -740,7 +847,10 @@
 
 .card-actions {
   display: flex;
-  gap: 24rpx;
+  flex-direction: row;
+  gap: 16rpx;
+  justify-content: center;
+  align-items: center;
 }
 
 .icon-view, .icon-delete {
@@ -761,18 +871,29 @@
   align-items: center;
 }
 
-.card-content {
-  padding: 10rpx;
+.svg-icon image {
+  width: 100%;
+  height: 100%;
 }
 
 .card-row {
   display: flex;
   margin-bottom: 12rpx;
+  align-items: center;
+}
+
+.card-label {
+  font-size: 28rpx;
+  color: #666;
+  min-width: 140rpx;
+  display: flex;
+  align-items: center;
 }
 
 .card-value {
   color: #333;
   flex: 1;
+  font-size: 28rpx;
 }
 
 .card-feedback {
@@ -785,58 +906,12 @@
   margin-bottom: 8rpx;
 }
 
-/* 添加详情卡片底部区域和保存按钮的样式 */
-.detail-card-footer {
-  padding: 15px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: center;
-}
-
-.save-card-btn {
-  background-color: #07c160;
-  color: white;
-  border: none;
-  border-radius: 8rpx;
-  padding: 8rpx 0;
-  font-size: 28rpx;
-  min-width: 95%;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
-
-.save-card-btn image {
-  width: 36rpx;
-  height: 36rpx;
-  padding-right: 10rpx;
-}
-
-/* 确保详情卡片样式完整 */
-.detail-card-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+.card-feedback .card-value {
+  line-height: 1.5;
 }
 
 .form-item {
   padding: 10rpx 0;
-}
-
-.detail-card {
-  width: 85%;
-  max-width: 320px;
-  background-color: white;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .label-icon {
@@ -845,7 +920,41 @@
   margin-right: 12rpx;
 }
 
-.card-label {
+/* ** Start: Styles for Exercise List in Detail Card ** */
+.detail-exercise-list {
+  margin-top: 10rpx;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 8rpx; /* Space between list items */
 }
+
+.detail-exercise-item {
+  display: flex;
+  align-items: center; /* Vertically align items */
+  font-size: 26rpx;
+  color: #333;
+}
+
+/* Style for the dot */
+.detail-exercise-item .list-dot {
+  margin-right: 8rpx; /* Space after the dot */
+  color: #666; /* Dot color */
+  font-weight: bold;
+  line-height: 1; /* Ensure dot aligns well */
+  margin-right: 24rpx;
+}
+
+.detail-exercise-item .completion-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.detail-exercise-item .exercise-text {
+  flex: 1;
+  word-break: break-word;
+}
+/* ** End: Styles for Exercise List ** */
+
+
+

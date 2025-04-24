@@ -1,4 +1,5 @@
 const common = require('../../utils/common.js');
+const { sortRecordsByDate, saveCardToAlbum, wrapText } = require('../../utils/common.js');
 
 Component({
 
@@ -252,7 +253,7 @@ Component({
       const actualDurationInSeconds = planDurationInSeconds - timerSeconds;
       const actualDurationInMinutes = Math.ceil(actualDurationInSeconds / 60);
       
-      // 创建新记录
+      // 创建新记录 - **Add exercises and completionStatus**
       const newRecord = {
         id: Date.now().toString(),
         planId: selectedPlan.id,
@@ -262,12 +263,15 @@ Component({
         completedCount,
         totalCount,
         feedback: trainingFeedback.trim(),
+        exercises: [...selectedPlan.exercises], // Store a copy of the exercises
+        completionStatus: [...completedExercises], // Store a copy of the completion status
         createdAt: new Date().toISOString()
       };
-      
+
       // 显示确认弹窗
       wx.showModal({
         title: '保存训练记录',
+        // Update confirmation message if needed, maybe remove exercise list from here
         content: `训练计划: ${newRecord.planName}\n实际时长: ${newRecord.duration}分钟\n完成项目: ${newRecord.completedCount}/${newRecord.totalCount}`,
         confirmText: '确认保存',
         cancelText: '取消',
@@ -283,14 +287,17 @@ Component({
     _saveTrainingRecordConfirmed(newRecord) {
       // 获取现有记录并添加新记录
       const trainingRecords = [newRecord, ...this.data.trainingRecords];
-      const sortedRecords = common.sortRecordsByDate(trainingRecords);
+      const sortedRecords = sortRecordsByDate(trainingRecords);
       
       // 保存到本地存储
       if (this.saveTrainingRecords(sortedRecords)) {
         // 更新状态并重置表单
         this.setData({
           trainingRecords: sortedRecords,
-          filteredRecords: sortedRecords,
+          // Update filteredRecords based on the new sortedRecords
+          filteredRecords: this.data.filterDate ?
+                           sortedRecords.filter(r => r.date === this.data.filterDate) :
+                           sortedRecords,
           selectedPlanIndex: -1,
           selectedPlan: null,
           completedExercises: [],
@@ -815,10 +822,15 @@ Component({
       const record = this.data.trainingRecords.find(r => r.id === recordId);
       
       if (record) {
+        // Now record should contain 'exercises' and 'completionStatus' if saved after the update
+        console.log("Viewing Record:", record); // Add for debugging
         this.setData({
           showRecordDetail: true,
           currentRecord: record
         });
+      } else {
+        console.warn("Record not found for ID:", recordId);
+        wx.showToast({ title: '无法找到记录', icon: 'none' });
       }
     },
 
@@ -830,152 +842,265 @@ Component({
       });
     },
 
-    // 添加保存训练记录分享卡片到相册的方法
-    saveTrainingCardToAlbum() {
-      wx.showLoading({
-        title: '正在保存...',
-      });
-      
-      // 获取用户昵称
-      const nickname = wx.getStorageSync('nickname') || {};// 不设置默认值，如果没有昵称则为空字符串
-      
-      // 获取卡片节点信息
-      const query = wx.createSelectorQuery().in(this);
-      query.select('#trainingCardCanvas').fields({
-        node: true,
-        size: true,
-      }).exec((res) => {
-        const canvas = res[0].node;
-        const ctx = canvas.getContext('2d');
-        
-        // 设置画布尺寸
-        const dpr = wx.getSystemInfoSync().pixelRatio;
-        canvas.width = res[0].width * dpr;
-        canvas.height = res[0].height * dpr;
-        ctx.scale(dpr, dpr);
-        
-        // 绘制卡片背景
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 绘制卡片内容
-        const record = this.data.currentRecord;
-        
-        // 绘制标题
-        ctx.fillStyle = '#333333';
-        ctx.font = 'bold 18px sans-serif';
+    // --- Method to trigger saving ---
+    callSaveTrainingCard() {
+        if (!this.data.currentRecord) {
+            wx.showToast({ title: '无训练记录数据', icon: 'none' });
+            return;
+        }
+        // Define the paths to the PNG icons needed for this card
+        const requiredImages = [
+            '/assets/png/calendar.png', // Assuming you create a png folder
+            '/assets/png/clock.png',
+            '/assets/png/circle-check.png',
+            '/assets/png/message-square.png',
+            '/assets/png/training-header.png' // Optional: header background image
+        ];
+        saveCardToAlbum(
+            '#trainingCardCanvas',
+            this,
+            this.drawTrainingCard,
+            this.data.currentRecord,
+            requiredImages // Pass the list of required images
+        );
+    },
+
+    // --- Drawing Function for Training Card (Revised for Style Matching) ---
+    drawTrainingCard(ctx, canvas, cardData, width, height, loadedImages) {
+        const record = cardData;
+        const nickname = wx.getStorageSync('nickname') || '';
+
+        // --- Constants for Styling (Adjust these to match your WXSS) ---
+        const headerHeight = 160;
+        const footerHeight = 80;
+        const padding = 30;
+        const contentWidth = width - 2 * padding;
+
+        // Colors
+        const headerBgColor = '#4ade80';
+        const bodyBgColor = '#f0fdf4';
+        const footerBgColor = '#4ade80';
+        const headerTextColor = '#14532d';
+        const headerSubTextColor = '#166534';
+        const footerTextColor = '#14532d';
+        const primaryTextColor = '#1f2937';
+        const secondaryTextColor = '#6b7280';
+        const completedColor = '#16a34a';
+        const incompleteColor = '#6b7280';
+
+        // Badge Styles
+        const badgeHeight = 44;
+        const badgeWidth = 160;
+        // *** Use a different color for the badge background ***
+        const badgeBgColor = '#facc15'; // Example: Yellow-400
+        const badgeTextColor = '#713f12'; // Example: Yellow-800 text
+        const badgeFontSize = 'bold 24px sans-serif';
+        const badgeRadius = badgeHeight / 2;
+
+        // Font Styles
+        const headerTitleFont = 'bold 40px sans-serif';
+        const headerSubtitleFont = '24px sans-serif';
+        const detailLabelFont = '22px sans-serif';
+        const detailValueFont = 'bold 24px sans-serif'; // Keep value bold
+        const exerciseListFont = '22px sans-serif';
+        const feedbackFont = 'italic 22px sans-serif';
+        const nicknameFont = 'italic 18px sans-serif';
+        const footerFont = '22px sans-serif';
+
+        // Layout & Spacing
+        const iconSize = 20;
+        const labelIconSpacing = 8;
+        const valueLabelSpacing = 10; // Space between label and value
+        const detailItemSpacing = 35; // Vertical space between detail items
+        const exerciseLineHeight = 30;
+        const labelOffsetY = 0; // Adjust vertical alignment if needed
+
+        // --- Backgrounds ---
+        ctx.fillStyle = bodyBgColor;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = headerBgColor;
+        ctx.fillRect(0, 0, width, headerHeight);
+        ctx.fillStyle = footerBgColor;
+        ctx.fillRect(0, height - footerHeight, width, footerHeight);
+
+        // --- Optional Header Background Image ---
+        const headerImage = loadedImages['/assets/png/training-header.png'];
+        if (headerImage) {
+            ctx.globalAlpha = 0.15;
+            ctx.drawImage(headerImage, 0, 0, width, headerHeight);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // --- Header Text ---
+        ctx.fillStyle = headerSubTextColor;
         ctx.textAlign = 'center';
-        ctx.fillText('训练记录详情', canvas.width / (2 * dpr), 30);
-        
-        // 初始化y坐标
-        let y = 70;
-        const lineHeight = 30; // 行高
-        
-        // 绘制计划名称
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${record.planName}`, 20, y);
-        y += lineHeight;
-        
-        // 绘制日期
-        ctx.font = '16px sans-serif';
-        ctx.fillText(`日期：${record.date}`, 20, y);
-        y += lineHeight;
-        
-        // 绘制时长
-        ctx.fillText(`时长：${record.duration} 分钟`, 20, y);
-        y += lineHeight;
-        
-        // 绘制完成项目，处理可能的多行情况
-        const completedText = `完成项目：${record.completedCount}/${record.totalCount}`;
-        const maxWidth = canvas.width / dpr - 40;
-        
-        // 检查文本是否需要换行
-        if (ctx.measureText(completedText).width > maxWidth) {
-          // 如果需要换行，分开绘制
-          ctx.fillText(`完成项目：`, 20, y);
-          y += lineHeight;
-          ctx.fillText(`${record.completedCount}/${record.totalCount}`, 20, y);
-          y += lineHeight;
-        } else {
-          // 如果不需要换行，直接绘制
-          ctx.fillText(completedText, 20, y);
-          y += lineHeight;
-        }
-        
-        // 绘制反馈（如果有）
-        if (record.feedback) {
-          // 添加一点额外空间
-          y += 10;
-          
-          // 处理长文本换行
-          const words = record.feedback.split('');
-          let line = '反馈：';
-          const startY = y;
-          
-          for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i];
-            const metrics = ctx.measureText(testLine);
-            const testWidth = metrics.width;
-            
-            if (testWidth > maxWidth && i > 0) {
-              ctx.fillText(line, 20, y);
-              line = words[i];
-              y += 25; // 反馈文本行间距小一点
+        ctx.font = headerSubtitleFont;
+        ctx.fillText('训练记录', width / 2, headerHeight * 0.4);
+        ctx.fillStyle = headerTextColor;
+        ctx.font = headerTitleFont;
+        wrapText(ctx, record.planName || '训练计划', width / 2, headerHeight * 0.7, width * 0.8, 45);
+
+        // --- Achievement Badge ---
+        const badgeX = (width - badgeWidth) / 2;
+        const badgeY = headerHeight - badgeHeight / 2;
+        // *** Ensure drawRoundRect helper is defined ***
+        const drawRoundRect = (x, y, w, h, r) => {
+            if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
+            ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        };
+        // Draw badge background
+        ctx.fillStyle = badgeBgColor;
+        drawRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius);
+        ctx.fill();
+        // Draw badge text
+        ctx.fillStyle = badgeTextColor;
+        ctx.font = badgeFontSize;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('训练完成', width / 2, badgeY + badgeHeight / 2);
+        ctx.textBaseline = 'alphabetic'; // Reset baseline
+
+        // --- Details Area ---
+        let currentY = headerHeight + badgeHeight / 2 + 30; // Start below badge
+
+        // *** Revised Helper to draw detail item horizontally ***
+        const drawDetailItemHorizontal = (iconPath, labelText, valueText) => {
+            // *** Access the loaded image using the provided iconPath key ***
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            // Calculate Y position to center icon and text vertically on the line
+            const verticalCenterY = itemStartY + detailItemSpacing / 2;
+            const iconY = verticalCenterY - iconSize / 2;
+
+            // Draw Icon
+            if (icon) {
+                // Use the loaded image object directly
+                ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
             } else {
-              line = testLine;
+                console.warn('Icon not loaded or key mismatch for:', iconPath); // Add a warning
+                ctx.fillStyle = secondaryTextColor; // Fallback shape
+                ctx.fillRect(padding, iconY, iconSize, iconSize);
             }
-          }
-          ctx.fillText(line, 20, y);
-          
-          // 在反馈文本下方添加足够的空间
-          y += 40;
+
+            // Prepare text drawing
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle'; // Align text vertically to the center line
+
+            // Draw Label
+            ctx.fillStyle = secondaryTextColor;
+            ctx.font = detailLabelFont;
+            const labelX = padding + iconSize + labelIconSpacing;
+            const labelContent = labelText + ':'; // Add colon
+            ctx.fillText(labelContent, labelX, verticalCenterY);
+
+            // Draw Value
+            ctx.fillStyle = primaryTextColor;
+            ctx.font = detailValueFont; // Use bold font for value
+            const labelWidth = ctx.measureText(labelContent).width;
+            const valueX = labelX + labelWidth + valueLabelSpacing; // Position value after label + spacing
+            const valueMaxWidth = width - padding - valueX; // Max width available for value
+            ctx.fillText(valueText, valueX, verticalCenterY, valueMaxWidth); // Draw value, allow truncation if needed
+
+            // Advance Y for the next item
+            currentY += detailItemSpacing;
+            ctx.textBaseline = 'alphabetic'; // Reset baseline
+        };
+
+        // *** Use the correct keys matching requiredImages ***
+        drawDetailItemHorizontal('/assets/png/calendar.png', '日期', record.date);
+        drawDetailItemHorizontal('/assets/png/clock.png', '时长', `${record.duration} 分钟`);
+
+        // --- Draw Completion Status / Exercise List ---
+        const completionLabel = `完成项目 (${record.completedCount}/${record.totalCount})`;
+        // Ensure this path also matches requiredImages
+        const completionIconPath = '/assets/png/circle-check.png';
+        // Draw only the icon and label part for this item first
+        const drawLabelAndIconOnly = (iconPath, labelText) => {
+            // *** Access the loaded image using the provided iconPath key ***
+            const icon = loadedImages[iconPath];
+            const itemStartY = currentY;
+            const verticalCenterY = itemStartY + detailItemSpacing / 2;
+            const iconY = verticalCenterY - iconSize / 2;
+
+            if (icon) {
+                // Use the loaded image object directly
+                ctx.drawImage(icon, padding, iconY, iconSize, iconSize);
+            } else {
+                console.warn('Icon not loaded or key mismatch for:', iconPath); // Add a warning
+                ctx.fillStyle = secondaryTextColor; // Fallback shape
+                ctx.fillRect(padding, iconY, iconSize, iconSize);
+            }
+
+            ctx.fillStyle = secondaryTextColor; ctx.font = detailLabelFont; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            const labelX = padding + iconSize + labelIconSpacing;
+            ctx.fillText(labelText + ':', labelX, verticalCenterY);
+            ctx.textBaseline = 'alphabetic'; // Reset
+
+            // Advance Y to start list/feedback below the label line with more clearance
+            currentY += detailItemSpacing * 2; // Use full item spacing to move down
+        };
+
+        drawLabelAndIconOnly(completionIconPath, completionLabel);
+
+        // Draw Exercises List below the label
+        if (record.exercises && record.exercises.length > 0) {
+            const listStartX = padding + iconSize + labelIconSpacing; // Indent list slightly
+            const listMaxWidth = contentWidth - (iconSize + labelIconSpacing);
+            ctx.font = exerciseListFont;
+
+            record.exercises.forEach((exercise, index) => {
+                const isCompleted = record.completionStatus && record.completionStatus[index];
+                const exerciseText = `• ${exercise}`;
+                ctx.fillStyle = isCompleted ? completedColor : incompleteColor;
+                // Use wrapText for the list items, starting from the adjusted currentY
+                currentY = wrapText(ctx, exerciseText, listStartX, currentY, listMaxWidth, exerciseLineHeight);
+            });
+            // Adjust space *after* the list if needed, maybe reduce it slightly if the initial gap is now larger
+            currentY += detailItemSpacing * 0.3; // Reduced space after list
         } else {
-          // 如果没有反馈，也添加一些空间
-          y += 20;
+             // If no exercises, add minimal spacing after the label line
+             currentY += detailItemSpacing * 0.2;
         }
-        
-        // 在右下角添加昵称（仅当昵称不为空时）
+
+
+        // --- Draw Feedback ---
+        if (record.feedback && record.feedback.trim() !== '') {
+            // Ensure this path also matches requiredImages
+            const feedbackIconPath = '/assets/png/message-square.png';
+            const feedbackLabel = '训练反馈';
+
+            // Draw feedback icon and label (uses the updated drawLabelAndIconOnly)
+            drawLabelAndIconOnly(feedbackIconPath, feedbackLabel);
+
+            // Draw feedback value below the label
+            ctx.fillStyle = primaryTextColor;
+            ctx.font = feedbackFont; // Italic feedback text
+            const feedbackStartX = padding + iconSize + labelIconSpacing; // Indent feedback
+            const feedbackMaxWidth = contentWidth - (iconSize + labelIconSpacing);
+            // Use wrapText for potentially long feedback, starting from the adjusted currentY
+            currentY = wrapText(ctx, record.feedback, feedbackStartX, currentY, feedbackMaxWidth, exerciseLineHeight);
+             // Adjust space *after* the feedback if needed
+            currentY += detailItemSpacing * 0.3; // Reduced space after feedback
+        }
+
+        // --- Nickname ---
         if (nickname && nickname.trim() !== '') {
-          ctx.font = 'italic 14px sans-serif';
-          ctx.textAlign = 'right';
-          ctx.fillStyle = '#666666';
-          ctx.fillText(`— ${nickname}`, canvas.width / dpr - 20, y);
+            ctx.font = nicknameFont;
+            ctx.textAlign = 'right';
+            ctx.fillStyle = secondaryTextColor;
+            const nicknameY = height - footerHeight - 15;
+            ctx.fillText(`— ${nickname}`, width - padding, nicknameY);
         }
-        
-        // 将画布内容保存为图片
-        wx.canvasToTempFilePath({
-          canvas: canvas,
-          success: (res) => {
-            wx.saveImageToPhotosAlbum({
-              filePath: res.tempFilePath,
-              success: () => {
-                wx.hideLoading();
-                wx.showToast({
-                  title: '保存成功',
-                  icon: 'success'
-                });
-              },
-              fail: (err) => {
-                wx.hideLoading();
-                wx.showToast({
-                  title: '保存失败',
-                  icon: 'none'
-                });
-                console.error('保存失败:', err);
-              }
-            });
-          },
-          fail: (err) => {
-            wx.hideLoading();
-            wx.showToast({
-              title: '生成图片失败',
-              icon: 'none'
-            });
-            console.error('生成图片失败:', err);
-          }
-        });
-      });
+
+        // --- Footer Text ---
+        ctx.fillStyle = footerTextColor;
+        ctx.font = footerFont;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('坚持训练，保持健康', width / 2, height - footerHeight / 2);
+        ctx.textBaseline = 'alphabetic';
     },
 
     // 阻止事件冒泡

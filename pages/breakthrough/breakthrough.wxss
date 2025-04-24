@@ -252,7 +252,7 @@
 }
 
 .card-title {
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 500;
   color: #333;
 }
@@ -402,118 +402,161 @@
   font-weight: normal;
 }
 
-/* 详情卡片样式 */
+/* 修改详情卡片样式 */
 .detail-card-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 32rpx 0;
 }
 
 .detail-card {
   width: 80%;
-  max-width: 600rpx;
-  background-color: white;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  max-width: 660rpx;
+  background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+  border-radius: 24rpx;
+  box-shadow: 0 25rpx 50rpx -12rpx rgba(0, 0, 0, 0.25);
   overflow: hidden;
+  position: relative;
   display: flex;
   flex-direction: column;
 }
 
 .detail-card-header {
-  padding: 30rpx 20rpx;
-  background-color: #f8f8f8;
-  border-bottom: 1rpx solid #eee;
+  height: 280rpx;
+  background: linear-gradient(to bottom, #0369a1, #075985, #0c4a6e);
+  padding: 40rpx;
   position: relative;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: none;
+}
+
+.mountain-bg {
+  position: absolute;
+  opacity: 0.3;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.header-subtitle {
+  font-size: 24rpx;
+  color: #bae6fd;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  margin-bottom: 8rpx;
 }
 
 .detail-card-title {
-  font-size: 36rpx;
+  font-size: 48rpx;
+  color: white;
   font-weight: bold;
-  color: #333;
 }
 
-.close-btn {
-  position: absolute;
-  right: 20rpx;
-  top: 20rpx;
-  font-size: 40rpx;
-  color: #999;
-  line-height: 1;
+.achievement-badge {
+  background: #f59e0b;
+  width: 60%;
+  display: flex;
+  color: #78350f;
+  height: 66rpx;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+  font-weight: bold;
+  padding: 16rpx 64rpx;
+  border-radius: 999rpx;
+  font-size: 32rpx;
+  margin-top: -48rpx;
+  margin-bottom: 32rpx;
+  border: 4rpx solid white;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .detail-card-content {
-  padding: 30rpx;
-  flex: 1;
+  padding: 48rpx;
+  padding-top: 0;
+}
+
+.details-grid {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32rpx;
 }
 
 .detail-item {
-  margin-bottom: 20rpx;
-  display: flex;
-  flex-direction: row;
-  padding-left: 20rpx;
-}
-
-.detail-title {
-  font-size: 40rpx;
-  font-weight: 500;
-  margin-bottom: 16rpx;
-  display: block;
+  margin-bottom: 0;
+  padding-left: 0;
 }
 
 .detail-label {
-  font-size: 28rpx;
-  margin-bottom: 10rpx;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
+  font-size: 24rpx;
+  color: #64748b;
+  margin-bottom: 4rpx;
 }
 
 .detail-value {
   font-size: 28rpx;
-  color: #333;
-  word-break: break-all;
-}
-
-.experience-text {
-  background-color: #f9f9f9;
-  padding: 16rpx;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  line-height: 1.5;
+  color: #1e293b;
+  font-weight: 500;
 }
 
 .detail-card-footer {
-  padding: 20rpx;
-  border-top: 1rpx solid #eee;
-  margin-bottom: 10rpx;
+  background: #0c4a6e;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 24rpx;
+  color: #bae6fd;
 }
 
 .save-card-btn {
-  background-color: #07c160;
+  background: #2563eb;
   color: white;
   border: none;
   border-radius: 8rpx;
-  padding: 8rpx 0;
+  padding: 16rpx 0;
   font-size: 28rpx;
-  min-width: 95%;
+  width: 95%;
   display: flex;
-  flex-direction: row;
+  align-items: center;
   justify-content: center;
-} 
+  margin: 0 auto;
+}
+
+.save-card-btn:active {
+  background: #1d4ed8;
+}
 
 .save-card-btn image {
-  width: 32rpx;
-  height: 32rpx;
-  padding-right: 10rpx;
+  width: 48rpx;
+  height: 48rpx;
 }
 
 /* 日期筛选相关样式 */
